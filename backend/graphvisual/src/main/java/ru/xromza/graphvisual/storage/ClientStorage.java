@@ -19,7 +19,7 @@ public class ClientStorage {
         if (clientId == null) {
             throw new IllegalArgumentException("clientId cannot be null");
         }
-        Sinks.Many<AlgorithmStepDto> sink = Sinks.many().multicast().onBackpressureBuffer(16, false);
+        Sinks.Many<AlgorithmStepDto> sink = Sinks.many().multicast().onBackpressureBuffer(1024, false);
 
         userSinks.computeIfAbsent(clientId, k -> ConcurrentHashMap.newKeySet()).add(sink);
 

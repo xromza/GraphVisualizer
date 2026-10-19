@@ -14,8 +14,6 @@ public class NettyCustomizerConfig {
     public WebServerFactoryCustomizer<NettyReactiveWebServerFactory> customizer() {
         return factory -> factory.addServerCustomizers(httpServer -> httpServer
                 .runOn(LoopResources.create("scale-netty", 1, 4, true))
-                .option(ChannelOption.SO_RCVBUF, 16384)
-                .option(ChannelOption.SO_SNDBUF, 16384)
                 .childOption(ChannelOption.SO_KEEPALIVE, true));
     }
 }

@@ -21,10 +21,10 @@ import java.util.UUID;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
 
 @RestController
 @RequiredArgsConstructor
@@ -41,14 +41,17 @@ public class StreamController {
         return Mono.just(algorithmRegistry.getAvailableAlgorithms());
     }
 
-    @PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PostMapping(path="run", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<AlgorithmStepDto>> runAlgorithmSse(
-            @RequestBody AlgorithmRunRequest request) {
+            @RequestBody AlgorithmRunRequest request,
+            ServerHttpRequest httpRequest) {
 
         UUID userToken = UUID.randomUUID();
         Sinks.Many<AlgorithmStepDto> sink = clientStorage.addClient(userToken);
         Graph graph = Graph.of(request.nodes(), request.edges(), request.directed());
-        algorithmService.consumeVisualization(graph, request.startNodeId(), request.targetNodeId(), request.algorithmType(), sink);
+
+        algorithmService.consumeVisualization(graph, request.startNodeId(), request.targetNodeId(),
+                request.algorithmType(), sink);
 
         Flux<ServerSentEvent<AlgorithmStepDto>> stepStream = sink.asFlux()
                 .map(step -> ServerSentEvent.<AlgorithmStepDto>builder()
@@ -68,4 +71,5 @@ public class StreamController {
                 stepStream,
                 pingStream.takeUntilOther(stepStream.then()));
     }
+
 }
