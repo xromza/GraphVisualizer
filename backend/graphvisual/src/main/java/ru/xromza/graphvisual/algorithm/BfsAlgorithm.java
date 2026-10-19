@@ -89,8 +89,8 @@ public class BfsAlgorithm implements GraphAlgorithm {
 
                 if (!visited.contains(neighborId)) {
                     visited.add(neighborId);
-                    parentMap.put(neighborId, current); // Запоминаем предка
-                    distances.put(neighborId, distances.get(current) + 1.0);
+                    parentMap.put(neighborId, current);
+                    distances.put(neighborId, distances.get(current) + edge.weight());
                     queue.offer(neighborId);
                 }
             }

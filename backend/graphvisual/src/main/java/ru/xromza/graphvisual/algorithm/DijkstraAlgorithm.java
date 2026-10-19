@@ -26,9 +26,10 @@ public class DijkstraAlgorithm implements GraphAlgorithm {
     }
 
     public String getName() {
-        return "Дейкстры";
+        return "Алгоритм Дейкстры";
     }
 
+    @Override
     public void compute(Graph graph, String sourceId, String sourceB, Consumer<AlgorithmStepDto> stepListener) {
         if (graph == null || !graph.nodes().containsKey(sourceId)) {
             stepListener.accept(new AlgorithmStepDto(
@@ -45,9 +46,9 @@ public class DijkstraAlgorithm implements GraphAlgorithm {
         }
 
         PriorityQueue<NodeDistance> pq = new PriorityQueue<>(Comparator.comparingDouble(NodeDistance::distance));
-        Set<String> visited = new HashSet<>();
         Map<String, Double> distances = new HashMap<>();
         Map<String, String> parentMap = new HashMap<>();
+        Set<String> processed = new HashSet<>();
 
         int stepNumber = 1;
 
@@ -59,12 +60,13 @@ public class DijkstraAlgorithm implements GraphAlgorithm {
         while (!pq.isEmpty()) {
             NodeDistance currentEntry = pq.poll();
             current = currentEntry.id();
+            double currentDist = currentEntry.distance();
 
-            if (visited.contains(current)) {
+            if (currentDist > distances.getOrDefault(current, Double.POSITIVE_INFINITY)) {
                 continue;
             }
 
-            visited.add(current);
+            processed.add(current);
 
             boolean isTargetReached = (sourceB != null && sourceB.equals(current));
 
@@ -78,7 +80,7 @@ public class DijkstraAlgorithm implements GraphAlgorithm {
                 stepListener.accept(new AlgorithmStepDto(
                         stepNumber++,
                         current,
-                        new HashSet<>(visited),
+                        new HashSet<>(processed),
                         new HashMap<>(distances),
                         AlgorithmStatus.COMPLETED,
                         path));
@@ -89,22 +91,20 @@ public class DijkstraAlgorithm implements GraphAlgorithm {
             stepListener.accept(new AlgorithmStepDto(
                     stepNumber++,
                     current,
-                    new HashSet<>(visited),
+                    new HashSet<>(processed),
                     new HashMap<>(distances),
                     AlgorithmStatus.PROCESSING,
                     currentPath));
 
             for (Edge edge : graph.getNeighbors(current)) {
                 String neighborId = edge.targetId();
+                double newDist = distances.get(current) + edge.weight();
 
-                if (!visited.contains(neighborId)) {
-                    double newDist = distances.get(current) + edge.weight();
-
-                    if (newDist < distances.getOrDefault(neighborId, Double.POSITIVE_INFINITY)) {
-                        distances.put(neighborId, newDist);
-                        parentMap.put(neighborId, current); // Запоминаем предка
-                        pq.offer(new NodeDistance(neighborId, newDist));
-                    }
+                // Если нашли более короткий путь к соседу
+                if (newDist < distances.getOrDefault(neighborId, Double.POSITIVE_INFINITY)) {
+                    distances.put(neighborId, newDist);
+                    parentMap.put(neighborId, current);
+                    pq.offer(new NodeDistance(neighborId, newDist));
                 }
             }
         }
@@ -112,7 +112,7 @@ public class DijkstraAlgorithm implements GraphAlgorithm {
         stepListener.accept(new AlgorithmStepDto(
                 stepNumber,
                 current,
-                new HashSet<>(visited),
+                new HashSet<>(processed),
                 new HashMap<>(distances),
                 AlgorithmStatus.COMPLETED,
                 List.of()));

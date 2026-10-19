@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import org.springframework.stereotype.Component;
@@ -34,38 +35,34 @@ public class AStarAlgorithm implements GraphAlgorithm {
     public void compute(Graph graph, String sourceId, String sourceB, Consumer<AlgorithmStepDto> stepListener) {
         if (graph == null || !graph.nodes().containsKey(sourceId)) {
             stepListener.accept(new AlgorithmStepDto(
-                    1,
-                    sourceId,
-                    Set.of(),
-                    Map.of(),
-                    AlgorithmStatus.COMPLETED,
-                    List.of()));
+                    1, sourceId, Set.of(), Map.of(), AlgorithmStatus.COMPLETED, List.of()));
             return;
         }
 
         Node targetNode = sourceB != null ? graph.nodes().get(sourceB) : null;
+        double averagePixelDistanceBetweenNodes = 200.0; 
 
-        java.util.function.BiFunction<Node, Node, Double> heuristic = (from, to) -> {
-            if (from == null || to == null) {
+        BiFunction<Node, Node, Double> heuristic = (from, to) -> {
+            if (from == null || to == null)
                 return 0.0;
-            }
-            return Math.hypot(from.x() - to.x(), from.y() - to.y());
+            double pixelDist = Math.hypot(from.x() - to.x(), from.y() - to.y());
+            return pixelDist / averagePixelDistanceBetweenNodes;
         };
 
-        record NodePriority(String id, double fScore) {
+        record NodePriority(String id, double gScore, double fScore) {
         }
 
         PriorityQueue<NodePriority> pq = new PriorityQueue<>(Comparator.comparingDouble(NodePriority::fScore));
-        Set<String> visited = new HashSet<>();
         Map<String, Double> gScores = new HashMap<>();
         Map<String, String> parentMap = new HashMap<>();
+        Set<String> processed = new HashSet<>(); // Для визуализации посещенных узлов
 
         int stepNumber = 1;
 
         Node startNode = graph.nodes().get(sourceId);
         gScores.put(sourceId, 0.0);
         double initialF = heuristic.apply(startNode, targetNode);
-        pq.offer(new NodePriority(sourceId, initialF));
+        pq.offer(new NodePriority(sourceId, 0.0, initialF));
 
         String current = null;
 
@@ -73,14 +70,17 @@ public class AStarAlgorithm implements GraphAlgorithm {
             NodePriority currentEntry = pq.poll();
             current = currentEntry.id();
 
-            if (visited.contains(current)) {
+            // Если этот узел уже был обработан по более короткому пути — пропускаем
+            // устаревшую запись из очереди
+            if (currentEntry.gScore() > gScores.getOrDefault(current, Double.POSITIVE_INFINITY)) {
                 continue;
             }
 
-            visited.add(current);
+            processed.add(current);
 
             boolean isTargetReached = (sourceB != null && sourceB.equals(current));
-            List<String> currentPath = buildPathTo(parentMap, current);
+            List<String> currentPath = buildPathTo(parentMap, current); // Убедитесь, что метод buildPathTo доступен
+
             if (isTargetReached) {
                 List<String> path = new ArrayList<>();
                 for (String at = current; at != null; at = parentMap.get(at)) {
@@ -91,7 +91,7 @@ public class AStarAlgorithm implements GraphAlgorithm {
                 stepListener.accept(new AlgorithmStepDto(
                         stepNumber++,
                         current,
-                        new HashSet<>(visited),
+                        new HashSet<>(processed),
                         new HashMap<>(gScores),
                         AlgorithmStatus.COMPLETED,
                         path));
@@ -101,27 +101,25 @@ public class AStarAlgorithm implements GraphAlgorithm {
             stepListener.accept(new AlgorithmStepDto(
                     stepNumber++,
                     current,
-                    new HashSet<>(visited),
+                    new HashSet<>(processed),
                     new HashMap<>(gScores),
                     AlgorithmStatus.PROCESSING,
                     currentPath));
 
             for (Edge edge : graph.getNeighbors(current)) {
                 String neighborId = edge.targetId();
+                double tentativeGScore = gScores.get(current) + edge.weight();
 
-                if (!visited.contains(neighborId)) {
-                    double tentativeGScore = gScores.get(current) + edge.weight();
+                // Если нашли более короткий путь к соседу
+                if (tentativeGScore < gScores.getOrDefault(neighborId, Double.POSITIVE_INFINITY)) {
+                    gScores.put(neighborId, tentativeGScore);
+                    parentMap.put(neighborId, current);
 
-                    if (tentativeGScore < gScores.getOrDefault(neighborId, Double.POSITIVE_INFINITY)) {
-                        gScores.put(neighborId, tentativeGScore);
-                        parentMap.put(neighborId, current);
+                    Node neighborNode = graph.nodes().get(neighborId);
+                    double hScore = heuristic.apply(neighborNode, targetNode);
+                    double fScore = tentativeGScore + hScore;
 
-                        Node neighborNode = graph.nodes().get(neighborId);
-                        double hScore = heuristic.apply(neighborNode, targetNode);
-                        double fScore = tentativeGScore + hScore;
-
-                        pq.offer(new NodePriority(neighborId, fScore));
-                    }
+                    pq.offer(new NodePriority(neighborId, tentativeGScore, fScore));
                 }
             }
         }
@@ -129,7 +127,7 @@ public class AStarAlgorithm implements GraphAlgorithm {
         stepListener.accept(new AlgorithmStepDto(
                 stepNumber,
                 current,
-                new HashSet<>(visited),
+                new HashSet<>(processed),
                 new HashMap<>(gScores),
                 AlgorithmStatus.COMPLETED,
                 List.of()));

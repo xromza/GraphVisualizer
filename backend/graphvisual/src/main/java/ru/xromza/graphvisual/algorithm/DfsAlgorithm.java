@@ -98,10 +98,14 @@ public class DfsAlgorithm implements GraphAlgorithm {
 
             List<Edge> neighbors = graph.getNeighbors(current);
             for (int i = neighbors.size() - 1; i >= 0; i--) {
-                String neighborId = neighbors.get(i).targetId();
+                Edge edge = neighbors.get(i);
+                String neighborId = edge.targetId();
 
                 if (!visited.contains(neighborId)) {
-                    distances.put(neighborId, distances.get(current) + 1.0);
+                    // ЗАМЕНА с + 1.0 на + edge.weight()
+                    double newDist = distances.get(current) + edge.weight();
+                    distances.put(neighborId, newDist);
+                    
                     stack.push(new StackEntry(neighborId, current));
                 }
             }

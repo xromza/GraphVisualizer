@@ -8,9 +8,11 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
 import ru.xromza.graphvisual.dto.AlgorithmListEntryDto;
 
 @Service
+@Slf4j 
 public class AlgorithmRegistry {
     private final Map<String, GraphAlgorithm> algorithmMap;
 
@@ -20,6 +22,7 @@ public class AlgorithmRegistry {
     }
 
     public List<AlgorithmListEntryDto> getAvailableAlgorithms() {
+        log.info(algorithmMap.values().stream().map(a -> new AlgorithmListEntryDto(a.getId(), a.getName())).toList().toString());
         return algorithmMap.values().stream().map(a -> new AlgorithmListEntryDto(a.getId(), a.getName())).toList();
     }
 
