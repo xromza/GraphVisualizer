@@ -4,7 +4,4 @@ server:
 spring:
     application:
         name: graphvisual
-    webflux:
-        apiversion:
-            use:
-                path-segment: 1
+            
