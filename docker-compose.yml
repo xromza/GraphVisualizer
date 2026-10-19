@@ -1,0 +1,136 @@
+services:
+  backend:
+    build:
+      context: ./backend/graphvisual
+      dockerfile: ./Dockerfile
+    image: graphvisual:0.0.1
+    container_name: graph-backend
+    environment:
+      - REDIS_HOST=redis-rate-limiter
+      - REDIS_PORT=6379
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s   
+      timeout: 5s     
+      retries: 3    
+      start_period: 20s
+    depends_on:
+      redis-rate-limiter:
+        condition: service_healthy 
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - backend
+  node-exporter:
+      image: prom/node-exporter:latest
+      container_name: node-exporter
+      restart: unless-stopped
+      volumes:
+        - /proc:/host/proc:ro
+        - /sys:/host/sys:ro
+        - /:/rootfs:ro
+      command:
+        - '--path.procfs=/host/proc'
+        - '--path.rootfs=/rootfs'
+        - '--path.sysfs=/host/sys'
+        - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      ports:
+        - "9100:9100"
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
+    container_name: cadvisor
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "8081:8080"
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml 
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+      - loki
+
+  frontend:
+    build:
+      context: ./frontend/graphvisualizer
+      dockerfile: ./Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=/api/v1
+        - BACKEND_URL=http://graph-backend:8080
+    image: graph-frontend
+    container_name: graph-frontend
+    restart: always
+    environment:
+      - NEXT_PUBLIC_API_URL=/api/v1
+      - BACKEND_URL=http://graph-backend:8080
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000', (res) => res.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  redis-rate-limiter:
+    image: redis:latest
+    container_name: redis-rate-limiter
+    volumes:
+      - redis-rate-limiter-volume:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  nginx:
+    image: nginx:alpine
+    container_name: graph-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro 
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+
+
+volumes:
+  redis-rate-limiter-volume:
+  grafana-storage:

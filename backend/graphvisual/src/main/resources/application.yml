@@ -2,6 +2,29 @@ server:
     port: 8080
 
 spring:
+    reactor:
+        context-propagation: auto
+    data:
+        redis:
+            host: ${REDIS_HOST}
+            port: ${REDIS_PORT}
     application:
         name: graphvisual
-            
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include:
+                    - health
+                    - prometheus
+    endpoint:
+        health:
+            show-details: always
+    tracing:
+        sampling:
+            probability: 1.0
+    otlp:
+        metrics:
+            export:
+                enabled: false
