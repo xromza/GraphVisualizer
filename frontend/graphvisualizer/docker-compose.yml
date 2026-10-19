@@ -1,0 +1,46 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=/api/v1
+        - BACKEND_URL=http://graph-backend:8080
+    image: graph-frontend
+    container_name: graph-frontend
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+    environment:
+      - NEXT_PUBLIC_API_URL=/api/v1
+      - BACKEND_URL=http://graph-backend:8080
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - graph-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: graph-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro 
+    depends_on:
+      - frontend
+    networks:
+      - graph-network
+
+networks:
+  graph-network:
+    external: true
