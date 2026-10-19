@@ -10,13 +10,40 @@ public record Graph(
         Map<String, Node> nodes,
         Map<String, List<Edge>> adjacencyList) {
 
+    public static Graph of(List<List<Object>> rawNodes, List<List<Object>> rawEdges, boolean isDirected) {
+        Map<String, Node> nodes = rawNodes.stream()
+                .map(raw -> new Node(
+                        (String) raw.get(0),
+                        (String) raw.get(1),
+                        ((Number) raw.get(2)).doubleValue(),
+                        ((Number) raw.get(3)).doubleValue()
+                ))
+                .collect(Collectors.toMap(Node::id, node -> node));
+
+        List<Edge> flatEdges = rawEdges.stream()
+                .map(raw -> new Edge(
+                        (String) raw.get(0),
+                        (String) raw.get(1),
+                        (String) raw.get(2),
+                        ((Number) raw.get(3)).doubleValue()
+                ))
+                .collect(Collectors.toList());
+
+        return Graph.of(nodes, flatEdges, isDirected);
+    }
+
     public static Graph of(Map<String, Node> nodes, List<Edge> flatEdges, boolean isDirected) {
-        Map<String, List<Edge>> adjacency = flatEdges.stream().collect(Collectors.groupingBy(Edge::sourceId));
+        Map<String, List<Edge>> adjacency = flatEdges.stream()
+                .collect(Collectors.groupingBy(
+                        Edge::sourceId, 
+                        Collectors.toCollection(ArrayList::new)
+                ));
+
         if (!isDirected) {
             for (Edge edge : flatEdges) {
-                if (edge.sourceId() != edge.targetId()) {
+                if (edge.sourceId() != null && !edge.sourceId().equals(edge.targetId())) {
                     adjacency.computeIfAbsent(edge.targetId(), e -> new ArrayList<>())
-                            .add(new Edge(edge.targetId(), edge.targetId(), edge.sourceId(), edge.weight()));
+                            .add(new Edge(edge.targetId() + "-rev", edge.targetId(), edge.sourceId(), edge.weight()));
                 }
             }
         }
