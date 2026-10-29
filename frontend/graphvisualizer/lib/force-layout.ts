@@ -1,6 +1,7 @@
 import type { Node, Edge } from './api';
 
 interface ForceOptions {
+  /** Предохранитель на случай, если система не успокаивается. */
   iterations?: number;
   onTick?: () => void;
   onDone?: () => void;
@@ -16,7 +17,7 @@ export function applyForceDirectedLayout(
   center: { x: number; y: number },
   options: ForceOptions = {}
 ): () => void {
-  const { iterations = 75, onTick, onDone } = options;
+  const { iterations = 600, onTick, onDone } = options;
   const nodes = Array.from(nodesMap.values());
 
   if (nodes.length < 2) {
@@ -31,6 +32,8 @@ export function applyForceDirectedLayout(
   const kGravity = 0.02;     // Сила притяжения к центру
   const damping = 0.82;      // Затухание скорости
   const maxSpeed = 30;       // Ограничение скорости за шаг
+  const restSpeed = 0.15;    // Система в равновесии, если ни один узел не движется быстрее (px/кадр)
+  const restFrames = 6;      // ...на протяжении стольких кадров подряд
 
   // Скорости вершин
   const velocities = new Map<string, { vx: number; vy: number }>();
@@ -48,6 +51,7 @@ export function applyForceDirectedLayout(
   }
 
   let currentIteration = 0;
+  let calmFrames = 0;
   let animId: number;
 
   const step = () => {
@@ -102,6 +106,7 @@ export function applyForceDirectedLayout(
     });
 
     // 3. Притяжение к центру экрана и обновление позиций
+    let fastest = 0;
     nodes.forEach(node => {
       const vel = velocities.get(node.id)!;
 
@@ -122,12 +127,15 @@ export function applyForceDirectedLayout(
 
       node.x += vel.vx;
       node.y += vel.vy;
+      fastest = Math.max(fastest, Math.hypot(vel.vx, vel.vy));
     });
+
+    calmFrames = fastest < restSpeed ? calmFrames + 1 : 0;
 
     onTick?.();
 
     currentIteration++;
-    if (currentIteration < iterations) {
+    if (calmFrames < restFrames && currentIteration < iterations) {
       animId = requestAnimationFrame(step);
     } else {
       onDone?.();

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { AlertCircle, X } from 'lucide-react';
 import GraphVisualizer from '@/components/GraphVisualizer';
 import type { Node, Edge, AlgorithmStep, AlgorithmRunRequest } from '@/lib/api';
@@ -48,6 +49,7 @@ export default function Home() {
       algorithmType: string,
       startNodeId: string,
       targetNodeId: string,
+      waypointNodeIds: string[],
       directed: boolean
     ) => {
       if (abortControllerRef.current) {
@@ -66,6 +68,7 @@ export default function Home() {
         algorithmType,
         startNodeId,
         targetNodeId,
+        waypointNodeIds,
         nodes,
         edges,
         directed,
@@ -86,7 +89,7 @@ export default function Home() {
           if (step.status === 'COMPLETED' || step.status === 'ERROR') {
             setIsPlaying(false);
             if (step.status === 'ERROR') {
-              setError('Ошибка при выполнении алгоритма');
+              setError('Алгоритм завершился с ошибкой. Проверьте граф и попробуйте снова.');
             }
             break;
           }
@@ -102,7 +105,7 @@ export default function Home() {
       } catch (err: unknown) {
         if (abortController.signal.aborted) return;
         console.error('Stream error:', err);
-        setError(err instanceof Error ? err.message : 'Ошибка подключения к серверу');
+        setError(err instanceof Error ? err.message : 'Нет связи с сервером. Проверьте подключение и повторите.');
       } finally {
         if (abortControllerRef.current === abortController) {
           setIsPlaying(false);
@@ -118,7 +121,8 @@ export default function Home() {
     : null;
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-slate-950">
+    <MotionConfig reducedMotion="user">
+    <div className="relative w-full h-screen overflow-hidden bg-canvas">
       <GraphVisualizer
         onAlgorithmRun={handleAlgorithmRun}
         onStop={handleStop}
@@ -133,22 +137,28 @@ export default function Home() {
       />
 
       {error && (
-        <div className="absolute top-4 right-4 z-50 bg-red-900/90 border border-red-700 text-red-100 px-4 py-3 rounded-2xl shadow-xl max-w-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2">
+        <div
+          role="alert"
+          className="absolute top-4 right-4 z-50 material rounded-card px-4 py-3 max-w-sm"
+        >
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-400 mt-0.5" />
+            <AlertCircle className="w-5 h-5 shrink-0 text-danger mt-0.5" aria-hidden="true" />
             <div className="flex-1">
-              <h3 className="font-semibold text-sm">Ошибка</h3>
-              <p className="text-xs text-red-200 mt-0.5">{error}</p>
+              <h3 className="font-semibold text-[13px] text-label">Не удалось выполнить</h3>
+              <p className="text-[12px] text-secondary mt-0.5">{error}</p>
             </div>
             <button
+              type="button"
               onClick={() => setError(null)}
-              className="flex-shrink-0 text-red-300 hover:text-white transition-colors"
+              aria-label="Закрыть уведомление"
+              className="shrink-0 w-6 h-6 -mr-1 -mt-0.5 rounded-full flex items-center justify-center text-secondary hover:bg-fill-hover hover:text-label transition-colors"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       )}
     </div>
+    </MotionConfig>
   );
 }

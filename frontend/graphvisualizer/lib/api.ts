@@ -21,6 +21,8 @@ export interface AlgorithmRunRequest {
   algorithmType: string;
   startNodeId: string;
   targetNodeId: string;
+  /** Узлы, через которые путь должен пройти по порядку. */
+  waypointNodeIds?: string[];
   nodes: Record<string, Node>;
   edges: Edge[];
   directed: boolean;
@@ -58,6 +60,7 @@ export async function* streamAlgorithmSteps(
     algorithmType: request.algorithmType,
     startNodeId: request.startNodeId,
     targetNodeId: request.targetNodeId,
+    waypointNodeIds: request.waypointNodeIds ?? [],
     directed: request.directed,
     nodes: Object.values(request.nodes).map(node => [
       node.id, 

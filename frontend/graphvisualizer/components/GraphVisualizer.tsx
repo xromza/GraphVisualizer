@@ -8,6 +8,7 @@ import {
   useCallback,
   useMemo,
 } from 'react';
+import { createPortal } from 'react-dom';
 import {
   motion,
   AnimatePresence,
@@ -29,7 +30,8 @@ import {
   Settings,
   Flag,
   Target,
-  Sparkles,
+  Orbit,
+  Shuffle,
   MousePointer,
   CirclePlus,
   ArrowRight,
@@ -101,17 +103,96 @@ function IOSSwitch({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer items-center rounded-full px-[2px] transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 disabled:opacity-40 ${
-        checked ? 'bg-[#34C759]' : 'bg-[rgba(120,120,128,0.32)]'
+      className={`relative inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer items-center rounded-full px-[2px] transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-40 ${
+        checked ? 'bg-success' : 'bg-fill-hover'
       }`}
     >
       <motion.span
         initial={false}
         animate={{ x: checked ? 20 : 0 }}
         transition={{ type: 'spring', stiffness: 550, damping: 34 }}
-        className="pointer-events-none block h-[27px] w-[27px] rounded-full bg-white shadow-[0_2px_6px_rgba(0,0,0,0.3)]"
+        className="pointer-events-none block h-[27px] w-[27px] rounded-full bg-white "
       />
     </button>
+  );
+}
+
+/** Глиф горячей клавиши — как в меню macOS: без рамки, вторичным цветом. */
+function Keycap({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <kbd
+      aria-hidden="true"
+      className={`font-sans text-[11px] font-medium text-secondary tabular-nums ${className}`}
+    >
+      {children}
+    </kbd>
+  );
+}
+
+/** Подсказка, как у кнопок в macOS: появляется после короткой паузы, с названием и клавишей. */
+function Tooltip({
+  label,
+  shortcut,
+  side = 'bottom',
+  children,
+}: {
+  label: string;
+  shortcut?: string;
+  side?: 'top' | 'bottom';
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+
+  const hide = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    setPos(null);
+  }, []);
+
+  const show = useCallback(
+    (delay: number) => {
+      hide();
+      timer.current = setTimeout(() => {
+        const r = ref.current?.getBoundingClientRect();
+        if (!r) return;
+        setPos({ x: r.left + r.width / 2, y: side === 'bottom' ? r.bottom + 8 : r.top - 8 });
+      }, delay);
+    },
+    [hide, side]
+  );
+
+  useEffect(() => hide, [hide]);
+
+  return (
+    <span
+      ref={ref}
+      className="inline-flex"
+      onPointerEnter={e => e.pointerType === 'mouse' && show(600)}
+      onPointerLeave={hide}
+      onPointerDown={hide}
+      onFocus={e => e.target.matches(':focus-visible') && show(0)}
+      onBlur={hide}
+    >
+      {children}
+      {pos &&
+        createPortal(
+          <div
+            role="tooltip"
+            style={{
+              left: pos.x,
+              top: pos.y,
+              transform: `translate(-50%, ${side === 'top' ? '-100%' : '0'})`,
+            }}
+            className="fixed z-[70] pointer-events-none flex items-center gap-2 whitespace-nowrap rounded-control bg-surface shadow-float px-2 py-1 text-[12px] text-label"
+          >
+            <span>{label}</span>
+            {shortcut && <Keycap>{shortcut}</Keycap>}
+          </div>,
+          document.body
+        )}
+    </span>
   );
 }
 
@@ -124,7 +205,7 @@ function SectionLabel({
 }) {
   return (
     <div
-      className={`text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8E8E93] ${className}`}
+      className={`text-[12px] font-medium text-secondary ${className}`}
     >
       {children}
     </div>
@@ -132,7 +213,7 @@ function SectionLabel({
 }
 
 function Hairline({ className = '' }: { className?: string }) {
-  return <div className={`h-px w-full bg-[rgba(84,84,88,0.6)] ${className}`} />;
+  return <div className={`h-px w-full bg-separator ${className}`} />;
 }
 
 function ActiveToolPill({ x, width }: { x: number; width: number }) {
@@ -148,7 +229,7 @@ function ActiveToolPill({ x, width }: { x: number; width: number }) {
   return (
     <motion.div
       aria-hidden="true"
-      className="absolute inset-y-0.5 left-0 z-0 rounded-[14px] bg-[#0A84FF] shadow-[0_4px_14px_rgba(10,132,255,0.45)] pointer-events-none"
+      className="absolute inset-y-0 left-0 z-0 rounded-card bg-fill-selected shadow-[0_1px_3px_rgba(0,0,0,0.25)] pointer-events-none"
       style={{ x: motionX, width: motionWidth }}
     />
   );
@@ -165,15 +246,13 @@ function CollapsibleX({
 
   return (
     <motion.div
-      initial={{ opacity: 0, width: 0, marginLeft: -gap, filter: 'blur(4px)' }}
+      initial={{ opacity: 0, width: 0, marginLeft: -gap }}
       animate={{
         opacity: 1,
         width: 'auto',
         marginLeft: 0,
-        filter: 'blur(0px)',
         transition: {
           opacity: { duration: 0.25, ease: APPLE_EASE, delay: 0.05 },
-          filter: { duration: 0.25, ease: APPLE_EASE, delay: 0.05 },
           width: { duration: 0.38, ease: APPLE_EASE },
           marginLeft: { duration: 0.38, ease: APPLE_EASE },
         },
@@ -182,10 +261,8 @@ function CollapsibleX({
         opacity: 0,
         width: 0,
         marginLeft: -gap,
-        filter: 'blur(4px)',
         transition: {
           opacity: { duration: 0.15, ease: 'easeOut' },
-          filter: { duration: 0.15, ease: 'easeOut' },
           width: { duration: 0.3, ease: APPLE_EASE },
           marginLeft: { duration: 0.3, ease: APPLE_EASE },
         },
@@ -213,15 +290,13 @@ function CollapsibleY({
 
   return (
     <motion.div
-      initial={{ opacity: 0, height: 0, marginTop: marginClosed, filter: 'blur(4px)' }}
+      initial={{ opacity: 0, height: 0, marginTop: marginClosed }}
       animate={{
         opacity: 1,
         height: 'auto',
         marginTop: marginOpen,
-        filter: 'blur(0px)',
         transition: {
           opacity: { duration: 0.25, ease: APPLE_EASE, delay: 0.04 },
-          filter: { duration: 0.25, ease: APPLE_EASE, delay: 0.04 },
           height: { duration: 0.38, ease: APPLE_EASE },
           marginTop: { duration: 0.38, ease: APPLE_EASE },
         },
@@ -230,10 +305,8 @@ function CollapsibleY({
         opacity: 0,
         height: 0,
         marginTop: marginClosed,
-        filter: 'blur(4px)',
         transition: {
           opacity: { duration: 0.15, ease: 'easeOut' },
-          filter: { duration: 0.15, ease: 'easeOut' },
           height: { duration: 0.3, ease: APPLE_EASE },
           marginTop: { duration: 0.3, ease: APPLE_EASE },
         },
@@ -327,14 +400,16 @@ function CustomSelect({
   options,
   value,
   onChange,
-  placeholder = '(Выбрать)',
+  placeholder = 'Не выбрано',
   disabled = false,
+  allowClear = true,
 }: {
   options: SelectOption[];
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  allowClear?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownStyles, setDropdownStyles] = useState<{
@@ -385,21 +460,26 @@ function CustomSelect({
       <button
         type="button"
         disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        onKeyDown={e => {
+          if (e.key === 'Escape') setIsOpen(false);
+        }}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full px-3 py-2 bg-[#2C2C2E] rounded-[10px] text-[13px] font-medium text-white flex items-center justify-between transition-all duration-200 select-none disabled:opacity-40 disabled:cursor-not-allowed active:bg-[#3A3A3C] ${
-          isOpen ? 'ring-2 ring-[#0A84FF]/50' : ''
+        className={`w-full px-3 py-2 bg-fill rounded-control text-[13px] font-medium text-label flex items-center justify-between transition-all duration-200 select-none disabled:opacity-40 disabled:cursor-not-allowed active:bg-fill-hover ${
+          isOpen ? 'ring-2 ring-accent/60' : ''
         }`}
       >
         <span className="truncate pr-2">
           {selectedOption ? (
             selectedOption.label
           ) : (
-            <span className="text-[#8E8E93]">{placeholder}</span>
+            <span className="text-secondary">{placeholder}</span>
           )}
         </span>
         <ChevronDown
           className={`w-3.5 h-3.5 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-            isOpen ? 'rotate-180 text-[#0A84FF]' : 'text-[#8E8E93]'
+            isOpen ? 'rotate-180 text-accent' : 'text-secondary'
           }`}
         />
       </button>
@@ -429,23 +509,24 @@ function CustomSelect({
               maxHeight: dropdownStyles.maxHeight,
               transformOrigin: dropdownStyles.bottom ? 'bottom center' : 'top center'
             }}
-            className="z-50 backdrop-blur-2xl bg-[#2C2C2E]/95 border border-white/[0.1] rounded-[13px] p-1 shadow-[0_12px_36px_rgba(0,0,0,0.5)] overflow-y-auto scrollbar-none flex flex-col gap-0.5 text-[13px] min-w-[180px]"
+            role="listbox"
+            className="z-50 material rounded-card p-1  overflow-y-auto scrollbar-none flex flex-col gap-0.5 text-[13px] min-w-[180px]"
           >
-            {placeholder && (
+            {placeholder && allowClear && (
               <button
                 type="button"
                 onClick={() => {
                   onChange('');
                   setIsOpen(false);
                 }}
-                className={`w-full px-2.5 py-1.5 rounded-[8px] text-left transition-colors flex items-center justify-between ${
+                className={`w-full px-2.5 py-1.5 rounded-control text-left transition-colors flex items-center justify-between ${
                   value === ''
-                    ? 'text-[#0A84FF] font-semibold'
-                    : 'text-[#8E8E93] hover:text-white hover:bg-white/[0.08]'
+                    ? 'text-accent font-semibold'
+                    : 'text-secondary hover:text-label hover:bg-fill-hover'
                 }`}
               >
                 <span>{placeholder}</span>
-                {value === '' && <Check className="w-3.5 h-3.5 text-[#0A84FF]" />}
+                {value === '' && <Check className="w-3.5 h-3.5 text-accent" />}
               </button>
             )}
 
@@ -455,18 +536,20 @@ function CustomSelect({
                 <button
                   key={option.value}
                   type="button"
+                  role="option"
+                  aria-selected={isSelected}
                   onClick={() => {
                     onChange(option.value);
                     setIsOpen(false);
                   }}
-                  className={`w-full px-2.5 py-1.5 rounded-[8px] text-left transition-colors flex items-center justify-between ${
+                  className={`w-full px-2.5 py-1.5 rounded-control text-left transition-colors flex items-center justify-between ${
                     isSelected
-                      ? 'text-[#0A84FF] font-semibold'
-                      : 'text-white hover:bg-white/[0.08]'
+                      ? 'text-accent font-semibold'
+                      : 'text-label hover:bg-fill-hover'
                   }`}
                 >
                   <span className="truncate pr-2">{option.label}</span>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-[#0A84FF] shrink-0" />}
+                  {isSelected && <Check className="w-3.5 h-3.5 text-accent shrink-0" />}
                 </button>
               );
             })}
@@ -489,11 +572,11 @@ function CollapsibleRouteDisplay({
   const fullText = labels.join(' → ');
 
   return (
-    <div className="flex items-start gap-1.5 w-full sm:w-auto pt-1 sm:pt-0 border-t sm:border-t-0 border-[rgba(84,84,88,0.5)]">
-      <span className="text-[#8E8E93] text-[11px] shrink-0 font-medium mt-0.5">Маршрут:</span>
+    <div className="flex items-start gap-1.5 w-full sm:w-auto pt-1 sm:pt-0 border-t sm:border-t-0 border-separator">
+      <span className="text-secondary text-[12px] shrink-0 font-medium mt-0.5">Маршрут:</span>
       <div className="relative flex items-start gap-2">
         <div 
-          className={`text-[#30D158] font-medium text-[11px] leading-tight select-text break-words transition-all duration-300 ${
+          className={`text-success font-medium text-[12px] leading-tight select-text break-words transition-all duration-300 ${
             isExpanded ? 'max-w-[280px]' : 'max-w-[150px] truncate'
           }`}
         >
@@ -502,8 +585,10 @@ function CollapsibleRouteDisplay({
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-[#8E8E93] hover:text-white transition-colors p-0.5 shrink-0 bg-[#2C2C2E] rounded-[5px]"
-          title={isExpanded ? "Свернуть путь" : "Посмотреть весь путь"}
+          className="text-secondary hover:text-label transition-colors p-0.5 shrink-0 bg-fill rounded-control"
+          title={isExpanded ? 'Свернуть маршрут' : 'Показать весь маршрут'}
+          aria-label={isExpanded ? 'Свернуть маршрут' : 'Показать весь маршрут'}
+          aria-expanded={isExpanded}
         >
           {isExpanded ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
         </button>
@@ -512,8 +597,148 @@ function CollapsibleRouteDisplay({
   );
 }
 
+/* Диалог в духе системного алерта: короткий заголовок, одно действие и «Отмена». */
+type DialogState =
+  | {
+      kind: 'prompt';
+      title: string;
+      message?: string;
+      initial: string;
+      inputMode?: 'text' | 'decimal' | 'numeric';
+      confirmLabel: string;
+      validate?: (value: string) => string | null;
+      onSubmit: (value: string) => void;
+    }
+  | {
+      kind: 'confirm';
+      title: string;
+      message: string;
+      confirmLabel: string;
+      destructive?: boolean;
+      onConfirm: () => void;
+    };
+
+function AlertDialog({ state, onClose }: { state: DialogState | null; onClose: () => void }) {
+  return (
+    <AnimatePresence>
+      {state && <AlertDialogBody key="alert" state={state} onClose={onClose} />}
+    </AnimatePresence>
+  );
+}
+
+function AlertDialogBody({ state, onClose }: { state: DialogState; onClose: () => void }) {
+  const [value, setValue] = useState(state.kind === 'prompt' ? state.initial : '');
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const submit = () => {
+    if (state.kind === 'prompt') {
+      const message = state.validate?.(value) ?? null;
+      if (message) {
+        setError(message);
+        return;
+      }
+      onClose();
+      state.onSubmit(value);
+    } else {
+      onClose();
+      state.onConfirm();
+    }
+  };
+
+  const destructive = state.kind === 'confirm' && state.destructive;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1, transition: { duration: 0.2 } }}
+      exit={{ opacity: 0, transition: { duration: 0.15 } }}
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40"
+      onPointerDown={e => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <motion.form
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="alert-title"
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1, transition: { duration: 0.22, ease: APPLE_EASE } }}
+        exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.12 } }}
+        onSubmit={e => {
+          e.preventDefault();
+          submit();
+        }}
+        className="w-full max-w-[300px] rounded-panel bg-surface shadow-float p-4 flex flex-col gap-3"
+      >
+        <div className="text-center">
+          <h2 id="alert-title" className="text-[15px] font-semibold text-label">
+            {state.title}
+          </h2>
+          {state.message && (
+            <p className="mt-1 text-[13px] text-secondary">{state.message}</p>
+          )}
+        </div>
+
+        {state.kind === 'prompt' && (
+          <div>
+            <input
+              ref={inputRef}
+              value={value}
+              inputMode={state.inputMode}
+              onChange={e => {
+                setValue(e.target.value);
+                setError(null);
+              }}
+              aria-invalid={!!error}
+              className="w-full px-3 py-2 rounded-control bg-fill text-[13px] text-label outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            />
+            {error && (
+              <p role="alert" className="mt-1.5 text-[12px] text-danger">
+                {error}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            autoFocus={state.kind === 'confirm'}
+            className="py-2 rounded-card bg-fill hover:bg-fill-hover text-[13px] font-medium text-label transition-colors"
+          >
+            Отмена
+          </button>
+          <button
+            type="submit"
+            className={`py-2 rounded-card text-[13px] font-semibold text-white transition-colors ${
+              destructive ? 'bg-danger-fill hover:bg-danger-fill/90' : 'bg-accent-fill hover:bg-accent-fill/90'
+            }`}
+          >
+            {state.confirmLabel}
+          </button>
+        </div>
+      </motion.form>
+    </motion.div>
+  );
+}
+
 const LAYOUT_OPTIONS = [
-  { id: 'force' as const, label: 'Сила', icon: Sparkles },
+  { id: 'force' as const, label: 'Силы', icon: Orbit },
   { id: 'circular' as const, label: 'Круг', icon: CircleDot },
   { id: 'grid' as const, label: 'Сетка', icon: Grid3X3 },
   { id: 'hierarchical' as const, label: 'Дерево', icon: GitFork },
@@ -530,6 +755,7 @@ interface GraphVisualizerProps {
     algorithmType: string,
     startNodeId: string,
     targetNodeId: string,
+    waypointNodeIds: string[],
     directed: boolean
   ) => void;
   onStop?: () => void;
@@ -589,6 +815,7 @@ export default function GraphVisualizer({
   const [selectedAlgorithm, setSelectedAlgorithm] = useState<string>('');
   const [startNode, setStartNode] = useState<string>('');
   const [targetNode, setTargetNode] = useState<string>('');
+  const [waypoints, setWaypoints] = useState<string[]>([]);
   const [edgeWeightInput, setEdgeWeightInput] = useState<string>('1');
 
   const [currentLayout, setCurrentLayout] = useState<LayoutType | null>(null);
@@ -596,6 +823,9 @@ export default function GraphVisualizer({
   const [modalMode, setModalMode] = useState<'export' | 'import' | null>(null);
   const [jsonInputText, setJsonInputText] = useState('');
   const [copyStatus, setCopyStatus] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<DialogState | null>(null);
+  const closeDialog = useCallback(() => setDialog(null), []);
 
   const [isAutoLayouting, setIsAutoLayouting] = useState(false);
   const layoutCancelRef = useRef<(() => void) | null>(null);
@@ -675,7 +905,7 @@ export default function GraphVisualizer({
         graphBuilderRef.current.edges,
         center,
         {
-          iterations: 60,
+          iterations: 600,
           onTick: () => updateAndPreserveVisuals(),
           onDone: () => {
             setGraphVersion(v => v + 1);
@@ -759,9 +989,10 @@ export default function GraphVisualizer({
   useEffect(() => {
     if (rendererRef.current) {
       rendererRef.current.setStartAndTarget(startNode || null, targetNode || null);
+      rendererRef.current.setWaypoints(waypoints);
       rendererRef.current.render(selectedNodes);
     }
-  }, [startNode, targetNode, selectedNodes]);
+  }, [startNode, targetNode, waypoints, selectedNodes]);
 
   useEffect(() => {
     if (rendererRef.current) {
@@ -843,6 +1074,7 @@ export default function GraphVisualizer({
           graphBuilderRef.current.removeNode(clickedNode.id);
           if (startNode === clickedNode.id) setStartNode('');
           if (targetNode === clickedNode.id) setTargetNode('');
+          setWaypoints(w => w.filter(id => id !== clickedNode.id));
         } else if (clickedEdge) {
           graphBuilderRef.current.removeEdge(clickedEdge.id);
         }
@@ -865,19 +1097,26 @@ export default function GraphVisualizer({
   const handleRenameNode = (nodeId: string) => {
     const node = graphBuilderRef.current.nodes.get(nodeId);
     if (!node) return;
-    const newName = window.prompt(`Введите новое имя для узла "${node.label}":`, node.label);
-    if (newName && newName.trim()) {
-      node.label = newName.trim();
-      setGraphVersion(v => v + 1);
-      redraw();
-    }
     setContextMenu(null);
+    setDialog({
+      kind: 'prompt',
+      title: 'Переименовать узел',
+      initial: node.label,
+      confirmLabel: 'Готово',
+      validate: v => (v.trim() ? null : 'Имя не может быть пустым.'),
+      onSubmit: v => {
+        node.label = v.trim();
+        setGraphVersion(n => n + 1);
+        redraw();
+      },
+    });
   };
 
   const handleDeleteNode = (nodeId: string) => {
     graphBuilderRef.current.removeNode(nodeId);
     if (startNode === nodeId) setStartNode('');
     if (targetNode === nodeId) setTargetNode('');
+    setWaypoints(w => w.filter(id => id !== nodeId));
     setContextMenu(null);
     setCurrentLayout(null);
     setGraphVersion(v => v + 1);
@@ -895,16 +1134,20 @@ export default function GraphVisualizer({
   const handleEditEdgeWeight = (edgeId: string) => {
     const edge = graphBuilderRef.current.edges.find(e => e.id === edgeId);
     if (!edge) return;
-    const newWeightStr = window.prompt(`Введите новый вес ребра:`, edge.weight.toString());
-    if (newWeightStr !== null) {
-      const val = parseFloat(newWeightStr);
-      if (!isNaN(val) && isFinite(val)) {
-        edge.weight = val;
-        setGraphVersion(v => v + 1);
-        redraw();
-      }
-    }
     setContextMenu(null);
+    setDialog({
+      kind: 'prompt',
+      title: 'Вес ребра',
+      initial: edge.weight.toString(),
+      inputMode: 'decimal',
+      confirmLabel: 'Готово',
+      validate: v => (Number.isFinite(parseFloat(v)) ? null : 'Введите число.'),
+      onSubmit: v => {
+        edge.weight = parseFloat(v);
+        setGraphVersion(n => n + 1);
+        redraw();
+      },
+    });
   };
 
   function animateLayoutTransition(
@@ -981,31 +1224,42 @@ export default function GraphVisualizer({
 
   const handleRunAlgorithm = useCallback(() => {
     setContextMenu(null);
-    if (!selectedAlgorithm || !startNode || !targetNode) {
-      alert('Выберите алгоритм, начальную и целевую вершины');
-      return;
-    }
+    if (!selectedAlgorithm || !startNode || !targetNode) return;
 
     const nodes = graphBuilderRef.current.getNodesAsRecord();
     const edges = graphBuilderRef.current.edges;
 
     setIsPanelOpen(false);
 
-    onAlgorithmRun?.(nodes, edges, selectedAlgorithm, startNode, targetNode, directed);
-  }, [selectedAlgorithm, startNode, targetNode, directed, onAlgorithmRun]);
+    onAlgorithmRun?.(nodes, edges, selectedAlgorithm, startNode, targetNode, waypoints, directed);
+  }, [selectedAlgorithm, startNode, targetNode, waypoints, directed, onAlgorithmRun]);
 
-  const handleClearGraph = useCallback(() => {
+  const clearGraph = useCallback(() => {
     setContextMenu(null);
     graphBuilderRef.current.clear();
     setSelectedNodes(new Set());
     setEdgeStart(null);
     setStartNode('');
     setTargetNode('');
+    setWaypoints([]);
     setCurrentLayout(null);
     setGraphVersion(v => v + 1);
     onReset?.();
     redraw();
   }, [onReset, redraw]);
+
+  const handleClearGraph = useCallback(() => {
+    setContextMenu(null);
+    if (graphBuilderRef.current.nodes.size === 0) return;
+    setDialog({
+      kind: 'confirm',
+      title: 'Очистить холст?',
+      message: 'Все узлы и рёбра будут удалены. Это действие нельзя отменить.',
+      confirmLabel: 'Очистить',
+      destructive: true,
+      onConfirm: clearGraph,
+    });
+  }, [clearGraph]);
 
   const handleOpenExport = () => {
     setContextMenu(null);
@@ -1023,6 +1277,7 @@ export default function GraphVisualizer({
   const handleOpenImport = () => {
     setContextMenu(null);
     setJsonInputText('');
+    setImportError(null);
     setModalMode('import');
   };
 
@@ -1030,7 +1285,7 @@ export default function GraphVisualizer({
     try {
       const parsed = JSON.parse(jsonInputText);
       if (!parsed.nodes || !Array.isArray(parsed.nodes) || !parsed.edges || !Array.isArray(parsed.edges)) {
-        alert('Неверный формат JSON. Ожидаются поля "nodes" (массив) и "edges" (массив).');
+        setImportError('Неверный формат: нужны массивы «nodes» и «edges».');
         return;
       }
 
@@ -1059,6 +1314,8 @@ export default function GraphVisualizer({
 
       setStartNode('');
       setTargetNode('');
+      setWaypoints([]);
+    setWaypoints([]);
       setSelectedNodes(new Set());
       setEdgeStart(null);
       setCurrentLayout(null);
@@ -1067,23 +1324,11 @@ export default function GraphVisualizer({
       redraw();
       setModalMode(null);
     } catch (err) {
-      alert('Ошибка при разборе JSON. Проверьте правильность синтаксиса.');
+      setImportError('Не удалось прочитать JSON. Проверьте синтаксис.');
     }
   };
 
-  const handleGenerateRandomGraph = useCallback(() => {
-    if (isPlaying) return;
-
-    const input = window.prompt('Введите количество узлов (N) для генерации:', '50');
-    if (!input) return;
-
-    const count = parseInt(input, 10);
-    if (isNaN(count) || count < 2 || count > 1000) {
-      alert('Пожалуйста, введите число от 2 до 1000.');
-      return;
-    }
-
-    setContextMenu(null);
+  const generateGraph = useCallback((count: number) => {
 
     const width = canvasRef.current ? canvasRef.current.clientWidth : 1000;
     const height = canvasRef.current ? canvasRef.current.clientHeight : 800;
@@ -1100,6 +1345,7 @@ export default function GraphVisualizer({
     setEdgeStart(null);
     setStartNode('');
     setTargetNode('');
+    setWaypoints([]);
     setCurrentLayout(null);
     onReset?.();
     setGraphVersion(v => v + 1);
@@ -1113,7 +1359,7 @@ export default function GraphVisualizer({
       graphBuilderRef.current.edges,
       center,
       {
-        iterations: 60,
+        iterations: 600,
         onTick: () => redraw(),
         onDone: () => {
           setGraphVersion(v => v + 1);
@@ -1123,7 +1369,26 @@ export default function GraphVisualizer({
         },
       }
     );
-  }, [isPlaying, onReset, redraw]);
+  }, [onReset, redraw]);
+
+  const handleGenerateRandomGraph = useCallback(() => {
+    if (isPlaying) return;
+
+    setContextMenu(null);
+    setDialog({
+      kind: 'prompt',
+      title: 'Случайный граф',
+      message: 'Сколько узлов создать? От 2 до 1000.',
+      initial: '50',
+      inputMode: 'numeric',
+      confirmLabel: 'Создать',
+      validate: v => {
+        const n = parseInt(v, 10);
+        return Number.isInteger(n) && n >= 2 && n <= 1000 ? null : 'Введите число от 2 до 1000.';
+      },
+      onSubmit: v => generateGraph(parseInt(v, 10)),
+    });
+  }, [isPlaying]);
 
   const handleCopyJson = () => {
     navigator.clipboard.writeText(jsonInputText);
@@ -1247,19 +1512,59 @@ export default function GraphVisualizer({
     return { nodes, edges };
   }
 
+  /* Горячие клавиши. Не срабатывают при вводе текста, открытых диалогах и с модификаторами. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+
+      if (e.key === 'Escape') {
+        if (modalMode) setModalMode(null);
+        else if (contextMenu) setContextMenu(null);
+        else setEdgeStart(null);
+        return;
+      }
+      if (modalMode || dialog) return;
+
+      const toolKeys: Record<string, Tool> = { v: 'select', n: 'addNode', e: 'addEdge', d: 'delete' };
+      const key = e.key.toLowerCase();
+
+      if (toolKeys[key] && !isPlaying) {
+        setTool(toolKeys[key]);
+        setEdgeStart(null);
+        setContextMenu(null);
+      } else if (key === 'p') {
+        setIsPanelOpen(open => !open);
+      } else if (e.key === ' ' && el === document.body) {
+        e.preventDefault();
+        if (isPlaying) onStop?.();
+        else handleRunAlgorithm();
+      } else if (stepsCount > 0 && !isPlaying) {
+        if (e.key === 'ArrowLeft') onStepChange?.(Math.max(0, currentStepIndex - 1));
+        else if (e.key === 'ArrowRight') onStepChange?.(Math.min(stepsCount - 1, currentStepIndex + 1));
+        else if (e.key === 'Home') onStepChange?.(0);
+        else if (e.key === 'End') onStepChange?.(stepsCount - 1);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [modalMode, dialog, contextMenu, isPlaying, stepsCount, currentStepIndex, onStop, onStepChange, handleRunAlgorithm]);
+
   const TOOLS = [
-    { value: 'select', label: 'Выбор', icon: MousePointer },
-    { value: 'addNode', label: 'Узел', icon: CirclePlus },
-    { value: 'addEdge', label: 'Ребро', icon: ArrowRight },
-    { value: 'delete', label: 'Удалить', icon: Trash2 },
+    { value: 'select', label: 'Выбор', key: 'V', icon: MousePointer },
+    { value: 'addNode', label: 'Узел', key: 'N', icon: CirclePlus },
+    { value: 'addEdge', label: 'Ребро', key: 'E', icon: ArrowRight },
+    { value: 'delete', label: 'Удалить', key: 'D', icon: Trash2 },
   ] satisfies {
     value: Tool;
     label: string;
+    key: string;
     icon: React.ComponentType<{ className?: string }>;
   }[];
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-black text-white select-none font-sans antialiased">
+    <div className="relative w-screen h-screen overflow-hidden bg-canvas text-label select-none font-sans antialiased">
       <canvas
         ref={canvasRef}
         onMouseDown={e => {
@@ -1280,24 +1585,22 @@ export default function GraphVisualizer({
       {/* Верхний бар управления */}
       <CenteredAt x={centerX} className="top-4 z-20">
         <MorphingContainer
-          className="pointer-events-auto shrink-0 box-content backdrop-blur-2xl bg-[#1C1C1E]/85 border border-white/[0.08] rounded-[18px] shadow-[0_12px_32px_rgba(0,0,0,0.45)] text-xs"
+          className="pointer-events-auto shrink-0 box-content material rounded-panel  text-xs"
           innerClassName="relative w-max max-w-[calc(100vw-3rem)] p-1.5"
         >
           <AnimatePresence mode="popLayout" initial={false}>
             {!hasStartedRun ? (
               <motion.div
                 key="pre-run-bar"
-                initial={{ opacity: 0, scale: 0.96, filter: 'blur(6px)' }}
+                initial={{ opacity: 0, scale: 0.96 }}
                 animate={{
                   opacity: 1,
                   scale: 1,
-                  filter: 'blur(0px)',
                   transition: { duration: 0.3, ease: APPLE_EASE },
                 }}
                 exit={{
                   opacity: 0,
                   scale: 0.96,
-                  filter: 'blur(6px)',
                   transition: { duration: 0.16, ease: 'easeOut' },
                 }}
                 className="flex items-center gap-2"
@@ -1318,37 +1621,37 @@ export default function GraphVisualizer({
                   )}
                 </AnimatePresence>
 
+                <Tooltip label="Запустить" shortcut="Пробел">
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.96 }}
                   transition={SPRING_SNAPPY}
                   onClick={handleRunAlgorithm}
                   disabled={!selectedAlgorithm || !startNode || !targetNode}
-                  className="px-4 py-2 rounded-[12px] bg-[#0A84FF] hover:bg-[#3395FF] active:bg-[#0A84FF] text-white font-semibold flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-[13px] shrink-0"
+                  className="px-4 py-2 rounded-card bg-accent-fill hover:bg-accent-fill/90 active:bg-accent-fill text-white font-semibold flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-[13px] shrink-0"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
                   <span>Запустить</span>
                 </motion.button>
+                </Tooltip>
               </motion.div>
             ) : (
               <motion.div
                 key="player-hud-container"
-                initial={{ opacity: 0, scale: 0.96, filter: 'blur(6px)' }}
+                initial={{ opacity: 0, scale: 0.96 }}
                 animate={{
                   opacity: 1,
                   scale: 1,
-                  filter: 'blur(0px)',
                   transition: { duration: 0.3, ease: APPLE_EASE },
                 }}
                 exit={{
                   opacity: 0,
                   scale: 0.96,
-                  filter: 'blur(6px)',
                   transition: { duration: 0.16, ease: 'easeOut' },
                 }}
                 className="flex flex-col"
               >
                 <div className="flex items-center gap-2 p-0.5">
+                  <Tooltip label={isPlaying ? 'Остановить' : 'Перезапустить'} shortcut="Пробел">
                   <div className="relative w-7 h-7 shrink-0">
                     <AnimatePresence initial={false}>
                       {isPlaying ? (
@@ -1357,12 +1660,11 @@ export default function GraphVisualizer({
                           initial={{ opacity: 0, scale: 0.6 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.14 } }}
-                          whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.92 }}
                           transition={SPRING_SNAPPY}
                           type="button"
                           onClick={onStop}
-                          className="absolute inset-0 rounded-[9px] bg-[#FF453A] text-white hover:bg-[#FF6961] font-bold flex items-center justify-center transition-colors"
+                          className="absolute inset-0 rounded-control bg-danger-fill text-white hover:bg-danger-fill/90 font-bold flex items-center justify-center transition-colors"
                         >
                           <Square className="w-3 h-3 fill-current" />
                         </motion.button>
@@ -1372,40 +1674,41 @@ export default function GraphVisualizer({
                           initial={{ opacity: 0, scale: 0.6 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.14 } }}
-                          whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.92 }}
                           transition={SPRING_SNAPPY}
                           type="button"
                           onClick={handleRunAlgorithm}
                           disabled={!selectedAlgorithm || !startNode || !targetNode}
-                          className="absolute inset-0 rounded-[9px] bg-[#0A84FF] text-white hover:bg-[#3395FF] font-bold flex items-center justify-center transition-colors disabled:opacity-30"
+                          className="absolute inset-0 rounded-control bg-accent-fill text-white hover:bg-accent-fill/90 font-bold flex items-center justify-center transition-colors disabled:opacity-30"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
                         </motion.button>
                       )}
                     </AnimatePresence>
                   </div>
+                  </Tooltip>
 
                   <div className="flex items-center gap-0.5 px-1 shrink-0">
                     {[
-                      { Icon: SkipBack, title: 'В начало', action: () => onStepChange?.(0), disabled: currentStepIndex <= 0 },
-                      { Icon: ChevronLeft, title: 'Шаг назад', action: () => onStepChange?.(currentStepIndex - 1), disabled: currentStepIndex <= 0 },
-                      { Icon: ChevronRight, title: 'Шаг вперед', action: () => onStepChange?.(currentStepIndex + 1), disabled: currentStepIndex >= stepsCount - 1 },
-                      { Icon: SkipForward, title: 'В конец', action: () => onStepChange?.(stepsCount - 1), disabled: currentStepIndex >= stepsCount - 1 },
-                    ].map(({ Icon, title, action, disabled }, idx) => (
+                      { Icon: SkipBack, key: 'Home', title: 'В начало', action: () => onStepChange?.(0), disabled: currentStepIndex <= 0 },
+                      { Icon: ChevronLeft, key: '←', title: 'Шаг назад', action: () => onStepChange?.(currentStepIndex - 1), disabled: currentStepIndex <= 0 },
+                      { Icon: ChevronRight, key: '→', title: 'Шаг вперёд', action: () => onStepChange?.(currentStepIndex + 1), disabled: currentStepIndex >= stepsCount - 1 },
+                      { Icon: SkipForward, key: 'End', title: 'В конец', action: () => onStepChange?.(stepsCount - 1), disabled: currentStepIndex >= stepsCount - 1 },
+                    ].map(({ Icon, key: hotkey, title, action, disabled }, idx) => (
+                      <Tooltip key={idx} label={title} shortcut={hotkey}>
                       <motion.button
-                        key={idx}
-                        title={title}
-                        whileHover={{ scale: 1.08 }}
+                        aria-label={title}
+                        aria-keyshortcuts={hotkey}
                         whileTap={{ scale: 0.9 }}
                         transition={SPRING_SNAPPY}
                         type="button"
                         onClick={action}
                         disabled={disabled}
-                        className="w-7 h-7 rounded-[8px] text-[#8E8E93] hover:text-white hover:bg-white/[0.08] flex items-center justify-center disabled:opacity-20 transition-colors"
+                        className="w-7 h-7 rounded-control text-secondary hover:text-label hover:bg-fill-hover flex items-center justify-center disabled:opacity-20 transition-colors"
                       >
                         <Icon className="w-3.5 h-3.5" />
                       </motion.button>
+                      </Tooltip>
                     ))}
                   </div>
 
@@ -1419,9 +1722,9 @@ export default function GraphVisualizer({
                             max={stepsCount - 1}
                             value={currentStepIndex}
                             onChange={e => onStepChange?.(Number(e.target.value))}
-                            className="w-20 sm:w-28 h-1 bg-[#3A3A3C] rounded-full appearance-none cursor-pointer accent-[#0A84FF] focus:outline-none"
+                            className="w-20 sm:w-28 cursor-pointer accent-accent"
                           />
-                          <span className="text-[11px] font-mono text-[#0A84FF] shrink-0 font-semibold">
+                          <span className="text-[12px] tabular-nums text-accent shrink-0 font-semibold">
                             {currentStepIndex + 1}/{stepsCount}
                           </span>
                         </div>
@@ -1445,32 +1748,33 @@ export default function GraphVisualizer({
                     )}
                   </AnimatePresence>
 
+                  <Tooltip label="Сбросить обход">
                   <motion.button
-                    whileHover={{ scale: 1.08 }}
                     whileTap={{ scale: 0.9 }}
                     transition={SPRING_SNAPPY}
                     type="button"
                     onClick={onReset}
-                    className="w-7 h-7 rounded-[8px] text-[#8E8E93] hover:text-[#FF453A] hover:bg-[#FF453A]/15 flex items-center justify-center transition-colors shrink-0"
-                    title="Сбросить обход"
+                    className="w-7 h-7 rounded-control text-secondary hover:text-danger hover:bg-danger/15 flex items-center justify-center transition-colors shrink-0"
+                    aria-label="Сбросить обход"
                   >
                     <X className="w-3.5 h-3.5" />
                   </motion.button>
+                  </Tooltip>
                 </div>
 
                 <AnimatePresence initial={false}>
                   {!isPanelOpen && currentStep && (
                     <CollapsibleY key="step-info" marginOpen={6} marginClosed={0}>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-[rgba(84,84,88,0.5)] pt-2 px-1 text-xs">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-separator pt-2 px-1 text-xs">
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[#8E8E93] text-[11px] font-medium">Статус:</span>
+                          <span className="text-secondary text-[12px] font-medium">Статус:</span>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            className={`px-2 py-0.5 rounded-full text-[12px] font-semibold ${
                               currentStep.status === 'COMPLETED'
-                                ? 'bg-[#30D158]/15 text-[#30D158]'
+                                ? 'bg-success/15 text-success'
                                 : currentStep.status === 'ERROR'
-                                  ? 'bg-[#FF453A]/15 text-[#FF453A]'
-                                  : 'bg-[#FF9F0A]/15 text-[#FF9F0A]'
+                                  ? 'bg-danger/15 text-danger'
+                                  : 'bg-warning/15 text-warning'
                             }`}
                           >
                             {currentStep.status === 'COMPLETED'
@@ -1483,8 +1787,8 @@ export default function GraphVisualizer({
 
                         {currentStep.activeNodeId && (
                           <div className="flex items-center gap-1 shrink-0">
-                            <span className="text-[#8E8E93] text-[11px] font-medium">Фокус:</span>
-                            <span className="text-white font-semibold truncate max-w-[140px]">
+                            <span className="text-secondary text-[12px] font-medium">Фокус:</span>
+                            <span className="text-label font-semibold truncate max-w-[140px]">
                               {graphBuilderRef.current.nodes.get(currentStep.activeNodeId)?.label ||
                                 currentStep.activeNodeId}
                             </span>
@@ -1494,8 +1798,8 @@ export default function GraphVisualizer({
                         {currentStep.activeNodeId &&
                           currentStep.distances[currentStep.activeNodeId] !== undefined && (
                             <div className="flex items-center gap-1 shrink-0">
-                              <span className="text-[#8E8E93] text-[11px] font-medium">Длина:</span>
-                              <span className="text-[#30D158] font-mono font-semibold">
+                              <span className="text-secondary text-[12px] font-medium">Длина:</span>
+                              <span className="text-success tabular-nums font-semibold">
                                 {formatter.format(currentStep.distances[currentStep.activeNodeId])}
                               </span>
                             </div>
@@ -1518,28 +1822,27 @@ export default function GraphVisualizer({
       <AnimatePresence initial={false}>
         {!isPanelOpen && (
           <motion.button
-            initial={{ opacity: 0, scale: 0.9, filter: 'blur(4px)' }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{
               opacity: 1,
               scale: 1,
-              filter: 'blur(0px)',
               transition: { duration: 0.28, ease: APPLE_EASE, delay: 0.1 },
             }}
             exit={{
               opacity: 0,
               scale: 0.92,
-              filter: 'blur(4px)',
               transition: { duration: 0.14, ease: 'easeOut' },
             }}
-            whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.96 }}
             onClick={() => setIsPanelOpen(true)}
-            className={`absolute top-4 z-20 backdrop-blur-2xl bg-[#1C1C1E]/85 border border-white/[0.08] rounded-[14px] px-3.5 py-2 shadow-[0_10px_28px_rgba(0,0,0,0.4)] flex items-center gap-2 text-[13px] font-semibold text-white hover:bg-[#2C2C2E]/85 transition-all ${
+            aria-keyshortcuts="P"
+            className={`absolute top-4 z-20 material rounded-card px-3.5 py-2  flex items-center gap-2 text-[13px] font-semibold text-label hover:bg-fill-hover/60 transition-colors ${
               panelSide === 'left' ? 'left-4' : 'right-4'
             }`}
           >
-            <Settings className="w-3.5 h-3.5 text-[#0A84FF]" />
-            <span>Панель</span>
+            <Settings className="w-3.5 h-3.5 text-secondary" />
+            <span>Параметры</span>
+            <Keycap>P</Keycap>
           </motion.button>
         )}
       </AnimatePresence>
@@ -1560,7 +1863,7 @@ export default function GraphVisualizer({
             }}
             exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.16, ease: 'easeOut' } }}
             transition={SPRING_SMOOTH}
-            className="absolute top-4 bottom-4 w-80 rounded-[24px] border-2 border-[#0A84FF]/40 bg-[#0A84FF]/5 pointer-events-none z-10 backdrop-blur-[2px]"
+            className="absolute top-4 bottom-4 w-80 rounded-panel border-2 border-accent/50 bg-accent-fill/5 pointer-events-none z-10 backdrop-blur-[2px]"
           />
         )}
       </AnimatePresence>
@@ -1584,8 +1887,6 @@ export default function GraphVisualizer({
         animate={{
           x: targetPanelX,
           opacity: isPanelOpen ? 1 : 0,
-          scale: isDraggingPanel ? 1.015 : 1,
-          rotate: isDraggingPanel ? (dragHoverSide === 'left' ? -0.8 : 0.8) : 0,
         }}
         initial={{
           x: windowWidth + 50,
@@ -1600,33 +1901,33 @@ export default function GraphVisualizer({
           left: 0,
           pointerEvents: isPanelOpen ? 'auto' : 'none',
         }}
-        className={`absolute top-4 bottom-4 z-20 flex flex-col rounded-[22px] bg-[#1C1C1E]/85 backdrop-blur-2xl border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden ${
-          isDraggingPanel ? 'ring-1 ring-[#0A84FF]/30' : ''
+        className={`absolute top-4 bottom-4 z-20 flex flex-col rounded-panel material  overflow-hidden ${
+          isDraggingPanel ? 'ring-1 ring-accent/40' : ''
         }`}
       >
         {/* Grabber и заголовок */}
         <div
           onPointerDown={e => dragControls.start(e)}
-          className="pt-2.5 px-4 pb-3 border-b border-[rgba(84,84,88,0.6)] cursor-grab active:cursor-grabbing select-none group"
-          title="Зажмите и перетащите панель влево или вправо"
+          className="pt-2.5 px-4 pb-3 border-b border-separator cursor-grab active:cursor-grabbing select-none group"
+          title="Перетащите, чтобы переместить панель"
         >
-          <div className="w-9 h-[5px] rounded-full bg-[#8E8E93]/40 mx-auto group-hover:bg-[#8E8E93]/60 transition-colors" />
+          <div className="w-9 h-[5px] rounded-full bg-tertiary/50 mx-auto group-hover:bg-tertiary transition-colors" />
 
           <div className="flex items-center justify-between mt-2.5">
-            <span className="text-[15px] font-semibold text-white tracking-tight">Параметры</span>
+            <span className="text-[15px] font-semibold text-label tracking-tight">Параметры</span>
 
             <div
               onPointerDown={e => e.stopPropagation()}
               className="flex items-center gap-2.5 cursor-default"
             >
               <div className="flex items-center gap-2">
-                <span className="text-[12px] text-[#8E8E93] font-medium">Ориентир.</span>
+                <span className="text-[12px] text-secondary font-medium">Направленный</span>
                 <IOSSwitch checked={directed} onChange={setDirected} disabled={isPlaying} />
               </div>
 
               <button
                 onClick={() => setIsPanelOpen(false)}
-                className="w-7 h-7 rounded-full bg-[rgba(142,142,147,0.26)] active:scale-95 flex items-center justify-center text-[#8E8E93] hover:text-white transition-all"
+                className="w-7 h-7 rounded-full bg-fill active:scale-95 flex items-center justify-center text-secondary hover:text-label transition-all"
                 aria-label="Свернуть панель"
               >
                 {panelSide === 'right' ? (
@@ -1652,35 +1953,86 @@ export default function GraphVisualizer({
 
           <Hairline className="my-3.5" />
 
-          <SectionLabel className="mb-1.5">Вершины</SectionLabel>
+          <SectionLabel className="mb-1.5">Маршрут</SectionLabel>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-[12px] text-[#8E8E93] font-medium flex items-center gap-1.5 mb-1 px-0.5">
-                <Flag className="w-3 h-3 text-[#30D158]" />
-                <span>Старт</span>
+              <label className="text-[12px] text-secondary font-medium flex items-center gap-1.5 mb-1 px-0.5">
+                <Flag className="w-3 h-3" />
+                <span>Откуда</span>
               </label>
               <CustomSelect
                 options={nodeList.map(node => ({ value: node.id, label: node.label }))}
                 value={startNode}
                 onChange={setStartNode}
-                placeholder="(Выбрать)"
+                placeholder="Не выбран"
                 disabled={isPlaying}
               />
             </div>
 
             <div>
-              <label className="text-[12px] text-[#8E8E93] font-medium flex items-center gap-1.5 mb-1 px-0.5">
-                <Target className="w-3 h-3 text-[#FF453A]" />
-                <span>Цель</span>
+              <label className="text-[12px] text-secondary font-medium flex items-center gap-1.5 mb-1 px-0.5">
+                <Target className="w-3 h-3" />
+                <span>Куда</span>
               </label>
               <CustomSelect
                 options={nodeList.map(node => ({ value: node.id, label: node.label }))}
                 value={targetNode}
                 onChange={setTargetNode}
-                placeholder="(Выбрать)"
+                placeholder="Не выбран"
                 disabled={isPlaying}
               />
             </div>
+          </div>
+
+          <div className="mt-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[12px] text-secondary font-medium px-0.5">Через</span>
+              {waypoints.length > 0 && !isPlaying && (
+                <button
+                  type="button"
+                  onClick={() => setWaypoints([])}
+                  className="text-[12px] text-accent hover:underline"
+                >
+                  Убрать все
+                </button>
+              )}
+            </div>
+
+            {waypoints.length > 0 && (
+              <ol className="mb-2 flex flex-col gap-1">
+                {waypoints.map((id, index) => (
+                  <li
+                    key={id}
+                    className="flex items-center gap-2 pl-2.5 pr-1 py-1 rounded-control bg-fill text-[13px] text-label"
+                  >
+                    <span className="w-4 text-secondary tabular-nums">{index + 1}</span>
+                    <span className="flex-1 truncate">
+                      {graphBuilderRef.current.nodes.get(id)?.label ?? id}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={isPlaying}
+                      onClick={() => setWaypoints(w => w.filter(x => x !== id))}
+                      aria-label={`Убрать узел «${graphBuilderRef.current.nodes.get(id)?.label ?? id}» из маршрута`}
+                      className="w-6 h-6 rounded-control flex items-center justify-center text-secondary hover:text-label hover:bg-fill-hover disabled:opacity-30 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            )}
+
+            <CustomSelect
+              options={nodeList
+                .filter(n => n.id !== startNode && n.id !== targetNode && !waypoints.includes(n.id))
+                .map(n => ({ value: n.id, label: n.label }))}
+              value=""
+              onChange={id => id && setWaypoints(w => [...w, id])}
+              placeholder="Добавить узел…"
+              allowClear={false}
+              disabled={isPlaying}
+            />
           </div>
 
           {onSpeedChange && (
@@ -1688,7 +2040,7 @@ export default function GraphVisualizer({
               <Hairline className="my-3.5" />
               <div className="flex justify-between items-center mb-2">
                 <SectionLabel>Задержка шага</SectionLabel>
-                <span className="text-[12px] font-semibold text-[#0A84FF]">{speedMs} мс</span>
+                <span className="text-[12px] font-semibold text-accent">{speedMs} мс</span>
               </div>
               <input
                 type="range"
@@ -1697,7 +2049,7 @@ export default function GraphVisualizer({
                 step="50"
                 value={speedMs}
                 onChange={e => onSpeedChange(Number(e.target.value))}
-                className="w-full h-1 bg-[#3A3A3C] rounded-full appearance-none cursor-pointer accent-[#0A84FF] focus:outline-none"
+                className="w-full cursor-pointer accent-accent"
               />
             </>
           )}
@@ -1709,36 +2061,36 @@ export default function GraphVisualizer({
                 <Hairline className="my-3.5" />
                 <SectionLabel className="mb-1">Текущий шаг</SectionLabel>
 
-                <div className="divide-y divide-[rgba(84,84,88,0.4)]">
+                <div className="divide-y divide-separator">
                   <div className="flex items-center justify-between py-1.5">
-                    <span className="text-[13px] text-[#8E8E93]">Шаг</span>
-                    <span className="text-[13px] font-semibold text-white">
+                    <span className="text-[13px] text-secondary">Шаг</span>
+                    <span className="text-[13px] font-semibold text-label">
                       #{currentStep.stepNumber}
                       {stepsCount > 1 && (
-                        <span className="text-[#8E8E93] font-normal"> ({currentStepIndex + 1}/{stepsCount})</span>
+                        <span className="text-secondary font-normal"> ({currentStepIndex + 1}/{stepsCount})</span>
                       )}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between py-1.5">
-                    <span className="text-[13px] text-[#8E8E93]">Статус</span>
+                    <span className="text-[13px] text-secondary">Статус</span>
                     <span className="flex items-center gap-1.5">
                       <span
                         className={`w-2 h-2 rounded-full ${
                           currentStep.status === 'COMPLETED'
-                            ? 'bg-[#30D158]'
+                            ? 'bg-success'
                             : currentStep.status === 'ERROR'
-                              ? 'bg-[#FF453A]'
-                              : 'bg-[#FF9F0A] animate-pulse'
+                              ? 'bg-danger-fill'
+                              : 'bg-warning '
                         }`}
                       />
                       <span
                         className={`text-[13px] font-semibold ${
                           currentStep.status === 'COMPLETED'
-                            ? 'text-[#30D158]'
+                            ? 'text-success'
                             : currentStep.status === 'ERROR'
-                              ? 'text-[#FF453A]'
-                              : 'text-[#FF9F0A]'
+                              ? 'text-danger'
+                              : 'text-warning'
                         }`}
                       >
                         {currentStep.status === 'COMPLETED'
@@ -1752,8 +2104,8 @@ export default function GraphVisualizer({
 
                   {currentStep.activeNodeId && (
                     <div className="flex items-center justify-between py-1.5">
-                      <span className="text-[13px] text-[#8E8E93]">В фокусе</span>
-                      <span className="text-[13px] font-semibold text-white truncate max-w-[160px]">
+                      <span className="text-[13px] text-secondary">В фокусе</span>
+                      <span className="text-[13px] font-semibold text-label truncate max-w-[160px]">
                         {graphBuilderRef.current.nodes.get(currentStep.activeNodeId)?.label ||
                           currentStep.activeNodeId}
                       </span>
@@ -1763,8 +2115,8 @@ export default function GraphVisualizer({
                   {currentStep.activeNodeId &&
                     currentStep.distances[currentStep.activeNodeId] !== undefined && (
                       <div className="flex items-center justify-between py-1.5">
-                        <span className="text-[13px] text-[#8E8E93]">Длина пути</span>
-                        <span className="text-[13px] font-mono font-semibold text-[#30D158]">
+                        <span className="text-[13px] text-secondary">Длина пути</span>
+                        <span className="text-[13px] tabular-nums font-semibold text-success">
                           {formatter.format(currentStep.distances[currentStep.activeNodeId])}
                         </span>
                       </div>
@@ -1779,11 +2131,11 @@ export default function GraphVisualizer({
                     <div className="flex flex-wrap items-center gap-1">
                       {currentStep.path.map((id, index) => (
                         <span key={index} className="inline-flex items-center gap-1">
-                          <span className="px-1.5 py-0.5 rounded-[7px] bg-[#30D158]/15 text-[#30D158] font-semibold text-[11px]">
+                          <span className="px-1.5 py-0.5 rounded-control bg-success/15 text-success font-semibold text-[12px]">
                             {graphBuilderRef.current.nodes.get(id)?.label || id}
                           </span>
                           {index < currentStep.path.length - 1 && (
-                            <span className="text-[#8E8E93] text-[10px]">→</span>
+                            <span className="text-secondary text-[12px]">→</span>
                           )}
                         </span>
                       ))}
@@ -1796,11 +2148,11 @@ export default function GraphVisualizer({
         </div>
 
         {/* Нижний тулбар */}
-        <div className="p-3.5 border-t border-[rgba(84,84,88,0.6)] space-y-2.5">
+        <div className="p-3.5 border-t border-separator space-y-2.5">
           <div>
             <SectionLabel className="mb-1.5">Размещение узлов</SectionLabel>
             {/* Нативный UISegmentedControl */}
-            <div className="relative flex p-[2px] bg-[rgba(118,118,128,0.24)] rounded-[10px] select-none">
+            <div className="relative flex p-[2px] bg-fill rounded-control select-none">
               {LAYOUT_OPTIONS.map(opt => {
                 const Icon = opt.icon;
                 const isSelected = currentLayout === opt.id;
@@ -1813,8 +2165,8 @@ export default function GraphVisualizer({
                     type="button"
                     onClick={() => handleChangeLayout(opt.id)}
                     disabled={isDisabled}
-                    className={`relative flex-1 py-1.5 flex items-center justify-center gap-1 text-[11px] font-semibold rounded-[8px] transition-colors z-10 disabled:opacity-30 ${
-                      isSelected ? 'text-white' : 'text-[#98989E] hover:text-white'
+                    className={`relative flex-1 py-1.5 flex items-center justify-center gap-1 text-[12px] font-semibold rounded-control transition-colors z-10 disabled:opacity-30 ${
+                      isSelected ? 'text-label' : 'text-secondary hover:text-label'
                     }`}
                   >
                     <Icon className={`w-3 h-3 ${opt.id === 'force' && isAutoLayouting ? 'animate-spin' : ''}`} />
@@ -1822,7 +2174,7 @@ export default function GraphVisualizer({
                     {isSelected && (
                       <motion.div
                         layoutId="segmented-layout-indicator"
-                        className="absolute inset-0 bg-[#636366] rounded-[8px] shadow-[0_1px_5px_rgba(0,0,0,0.3)] -z-10"
+                        className="absolute inset-0 bg-fill-selected rounded-control  -z-10"
                         transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                       />
                     )}
@@ -1836,10 +2188,10 @@ export default function GraphVisualizer({
             type="button"
             onClick={handleGenerateRandomGraph}
             disabled={isPlaying}
-            className="w-full py-2 bg-[#2C2C2E] hover:bg-[#3A3A3C] active:scale-[0.98] text-white rounded-[10px] text-[13px] font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-40"
+            className="w-full py-2 bg-fill hover:bg-fill-hover active:scale-[0.98] text-label rounded-control text-[13px] font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-40"
           >
-            <Sparkles className="w-4 h-4 text-[#0A84FF]" />
-            <span>Сгенерировать граф (N)</span>
+            <Shuffle className="w-4 h-4 text-secondary" />
+            <span>Случайный граф…</span>
           </button>
 
           <div className="grid grid-cols-2 gap-2 mb-2">
@@ -1847,9 +2199,9 @@ export default function GraphVisualizer({
               type="button"
               onClick={handleOpenExport}
               disabled={isPlaying}
-              className="py-1.5 bg-[#2C2C2E] hover:bg-[#3A3A3C] active:scale-[0.98] text-white text-[12px] font-medium rounded-[10px] transition-all flex items-center justify-center gap-1.5 disabled:opacity-30"
+              className="py-1.5 bg-fill hover:bg-fill-hover active:scale-[0.98] text-label text-[12px] font-medium rounded-control transition-all flex items-center justify-center gap-1.5 disabled:opacity-30"
             >
-              <Download className="w-3.5 h-3.5 text-[#8E8E93]" />
+              <Download className="w-3.5 h-3.5 text-secondary" />
               <span>Экспорт</span>
             </button>
 
@@ -1857,9 +2209,9 @@ export default function GraphVisualizer({
               type="button"
               onClick={handleOpenImport}
               disabled={isPlaying}
-              className="py-1.5 bg-[#2C2C2E] hover:bg-[#3A3A3C] active:scale-[0.98] text-white text-[12px] font-medium rounded-[10px] transition-all flex items-center justify-center gap-1.5 disabled:opacity-30"
+              className="py-1.5 bg-fill hover:bg-fill-hover active:scale-[0.98] text-label text-[12px] font-medium rounded-control transition-all flex items-center justify-center gap-1.5 disabled:opacity-30"
             >
-              <Upload className="w-3.5 h-3.5 text-[#8E8E93]" />
+              <Upload className="w-3.5 h-3.5 text-secondary" />
               <span>Импорт</span>
             </button>
           </div>
@@ -1870,7 +2222,7 @@ export default function GraphVisualizer({
                 <button
                   type="button"
                   onClick={onReset}
-                  className="w-full py-1.5 my-2 bg-[#2C2C2E] hover:bg-[#3A3A3C] active:scale-[0.98] text-[#FF9F0A] text-[12px] font-medium rounded-[10px] transition-all flex items-center justify-center gap-1.5"
+                  className="w-full py-1.5 my-2 bg-fill hover:bg-fill-hover active:scale-[0.98] text-warning text-[12px] font-medium rounded-control transition-all flex items-center justify-center gap-1.5"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Сбросить обход</span>
@@ -1883,7 +2235,7 @@ export default function GraphVisualizer({
             type="button"
             onClick={handleClearGraph}
             disabled={isPlaying}
-            className="w-full py-1 text-[#FF453A]/70 hover:text-[#FF453A] active:opacity-70 text-[12px] font-medium transition-colors disabled:opacity-20 flex items-center justify-center gap-1.5"
+            className="w-full py-1 text-danger/80 hover:text-danger active:opacity-70 text-[12px] font-medium transition-colors disabled:opacity-20 flex items-center justify-center gap-1.5"
           >
             <Trash2 className="w-3 h-3" />
             <span>Очистить холст</span>
@@ -1899,25 +2251,23 @@ export default function GraphVisualizer({
             <AnimatePresence>
               {edgeStart && (
                 <motion.div
-                  initial={{ opacity: 0, y: 6, scale: 0.94, filter: 'blur(4px)' }}
+                  initial={{ opacity: 0, y: 6, scale: 0.94 }}
                   animate={{
                     opacity: 1,
                     y: 0,
                     scale: 1,
-                    filter: 'blur(0px)',
                     transition: { duration: 0.25, ease: APPLE_EASE },
                   }}
                   exit={{
                     opacity: 0,
                     y: 4,
                     scale: 0.96,
-                    filter: 'blur(4px)',
                     transition: { duration: 0.14, ease: 'easeOut' },
                   }}
-                  className="text-[12px] font-medium text-white bg-[#1C1C1E]/90 border border-white/[0.08] py-1.5 px-3.5 rounded-full shadow-xl flex items-center gap-2 whitespace-nowrap backdrop-blur-xl"
+                  className="material text-[12px] font-medium text-label py-1.5 px-3.5 rounded-full flex items-center gap-2 whitespace-nowrap"
                 >
-                  <CornerDownRight className="w-3.5 h-3.5 text-[#0A84FF]" />
-                  <span>кликните на второй узел для соединения</span>
+                  <CornerDownRight className="w-3.5 h-3.5 text-accent" />
+                  <span>Выберите второй узел</span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1926,12 +2276,12 @@ export default function GraphVisualizer({
           {/* Относительный контейнер, удерживающий центр строго на месте */}
           <div className="relative inline-flex items-center">
             <MorphingContainer
-              className="pointer-events-auto shrink-0 box-content backdrop-blur-2xl bg-[#1C1C1E]/85 border border-white/[0.08] rounded-[22px] shadow-[0_18px_45px_rgba(0,0,0,0.5)]"
+              className="pointer-events-auto shrink-0 box-content material rounded-panel "
               innerClassName="relative w-max p-2 flex items-center gap-2"
             >
               <div ref={toolRowRef} className="relative flex items-center gap-2">
                 <ActiveToolPill x={pillBounds.x} width={pillBounds.width} />
-                {TOOLS.map(({ value, label, icon: ToolIcon }) => {
+                {TOOLS.map(({ value, label, key: hotkey, icon: ToolIcon }) => {
                   const isActive = tool === value;
 
                   return (
@@ -1948,12 +2298,14 @@ export default function GraphVisualizer({
                         setContextMenu(null);
                       }}
                       disabled={isPlaying}
-                      className={`relative z-10 flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold rounded-[14px] whitespace-nowrap transition-colors disabled:opacity-40 ${
-                        isActive ? 'text-white' : 'text-[#8E8E93] hover:text-white'
+                      aria-keyshortcuts={hotkey}
+                      className={`relative z-10 flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold rounded-card whitespace-nowrap transition-colors disabled:opacity-40 ${
+                        isActive ? 'text-label' : 'text-secondary hover:text-label'
                       }`}
                     >
-                      <ToolIcon className="relative z-10 h-4 w-4" />
+                      <ToolIcon className={`relative z-10 h-4 w-4 ${isActive ? 'text-accent' : ''}`} />
                       <span className="relative z-10">{label}</span>
+                      <Keycap className="relative z-10 -ml-0.5">{hotkey}</Keycap>
                     </motion.button>
                   );
                 })}
@@ -1965,24 +2317,22 @@ export default function GraphVisualizer({
               {tool === 'addEdge' && (
                 <motion.div
                   key="edge-weight-absolute"
-                  initial={{ opacity: 0, x: -8, scale: 0.96, filter: 'blur(4px)' }}
+                  initial={{ opacity: 0, x: -8, scale: 0.96 }}
                   animate={{
                     opacity: 1,
                     x: 0,
                     scale: 1,
-                    filter: 'blur(0px)',
                     transition: { duration: 0.25, ease: APPLE_EASE },
                   }}
                   exit={{
                     opacity: 0,
                     x: -8,
                     scale: 0.96,
-                    filter: 'blur(4px)',
                     transition: { duration: 0.15, ease: 'easeOut' },
                   }}
-                  className="absolute left-full ml-3 top-0 bottom-0 my-auto h-fit pointer-events-auto backdrop-blur-2xl bg-[#1C1C1E]/85 border border-white/[0.08] rounded-[22px] px-3.5 py-2 shadow-[0_18px_45px_rgba(0,0,0,0.5)] flex items-center gap-2.5 whitespace-nowrap"
+                  className="absolute left-full ml-3 top-0 bottom-0 my-auto h-fit pointer-events-auto material rounded-panel px-3.5 py-2  flex items-center gap-2.5 whitespace-nowrap"
                 >
-                  <span className="text-[12px] text-[#8E8E93] font-medium">Вес:</span>
+                  <span className="text-[12px] text-secondary font-medium">Вес:</span>
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
@@ -1992,11 +2342,11 @@ export default function GraphVisualizer({
                         const next = Math.max(0.5, Math.round((current - 0.5) * 10) / 10);
                         setEdgeWeightInput(next.toString());
                       }}
-                      className="w-7 h-7 flex items-center justify-center rounded-[8px] bg-[#2C2C2E] text-[#8E8E93] hover:text-white active:scale-90 transition-all disabled:opacity-30"
+                      className="w-7 h-7 flex items-center justify-center rounded-control bg-fill text-secondary hover:text-label active:scale-90 transition-all disabled:opacity-30"
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <span className="w-9 text-center font-mono font-semibold text-white text-[13px]">
+                    <span className="w-9 text-center tabular-nums font-semibold text-label text-[13px]">
                       {edgeWeightInput}
                     </span>
                     <button
@@ -2007,7 +2357,7 @@ export default function GraphVisualizer({
                         const next = Math.round((current + 0.5) * 10) / 10;
                         setEdgeWeightInput(next.toString());
                       }}
-                      className="w-7 h-7 flex items-center justify-center rounded-[8px] bg-[#2C2C2E] text-[#8E8E93] hover:text-white active:scale-90 transition-all disabled:opacity-30"
+                      className="w-7 h-7 flex items-center justify-center rounded-control bg-fill text-secondary hover:text-label active:scale-90 transition-all disabled:opacity-30"
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
@@ -2027,7 +2377,7 @@ export default function GraphVisualizer({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, transition: { duration: 0.25, ease: APPLE_EASE } }}
             exit={{ opacity: 0, transition: { duration: 0.18, ease: 'easeOut' } }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.94, y: 12 }}
@@ -2043,15 +2393,15 @@ export default function GraphVisualizer({
                 y: 8,
                 transition: { duration: 0.18, ease: 'easeIn' },
               }}
-              className="w-full max-w-lg bg-[#1C1C1E] border border-white/[0.08] rounded-[20px] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.6)] flex flex-col gap-4 text-xs"
+              className="w-full max-w-lg bg-surface shadow-float rounded-panel p-5  flex flex-col gap-4 text-xs"
             >
-              <div className="relative flex items-center justify-center pb-3 border-b border-[rgba(84,84,88,0.6)]">
-                <span className="text-[15px] font-semibold text-white">
+              <div className="relative flex items-center justify-center pb-3 border-b border-separator">
+                <span className="text-[15px] font-semibold text-label">
                   {modalMode === 'export' ? 'Экспорт графа' : 'Импорт графа'}
                 </span>
                 <button
                   onClick={() => setModalMode(null)}
-                  className="absolute right-0 w-7 h-7 rounded-full bg-[rgba(142,142,147,0.26)] active:scale-95 flex items-center justify-center text-[#8E8E93] hover:text-white transition-all"
+                  className="absolute right-0 w-7 h-7 rounded-full bg-fill active:scale-95 flex items-center justify-center text-secondary hover:text-label transition-all"
                   aria-label="Закрыть"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -2059,7 +2409,7 @@ export default function GraphVisualizer({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[12px] text-[#8E8E93] font-medium block">
+                <label className="text-[12px] text-secondary font-medium block">
                   {modalMode === 'export'
                     ? 'JSON-структура текущего графа:'
                     : 'Вставьте структуру графа (JSON):'}
@@ -2069,20 +2419,25 @@ export default function GraphVisualizer({
                   onChange={e => setJsonInputText(e.target.value)}
                   readOnly={modalMode === 'export'}
                   placeholder="Вставьте JSON сюда..."
-                  className="w-full h-60 p-3 bg-[#2C2C2E] rounded-[13px] font-mono text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#0A84FF]/50 resize-none scrollbar-none"
+                  className="w-full h-60 p-3 bg-fill rounded-card font-mono text-[12px] text-label focus:outline-none focus:ring-2 focus:ring-accent/60 resize-none"
                 />
+                {importError && modalMode === 'import' && (
+                  <p role="alert" className="text-[12px] text-danger">
+                    {importError}
+                  </p>
+                )}
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[rgba(84,84,88,0.6)]">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-separator">
                 {modalMode === 'export' ? (
                   <>
                     <button
                       type="button"
                       onClick={handleCopyJson}
-                      className="px-4 py-2 bg-[#2C2C2E] hover:bg-[#3A3A3C] active:scale-[0.97] text-white font-medium rounded-[12px] transition-all flex items-center gap-2 text-[13px]"
+                      className="px-4 py-2 bg-fill hover:bg-fill-hover active:scale-[0.97] text-label font-medium rounded-card transition-all flex items-center gap-2 text-[13px]"
                     >
                       {copyStatus ? (
-                        <Check className="w-3.5 h-3.5 text-[#30D158]" />
+                        <Check className="w-3.5 h-3.5 text-success" />
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
@@ -2091,7 +2446,7 @@ export default function GraphVisualizer({
                     <button
                       type="button"
                       onClick={() => setModalMode(null)}
-                      className="px-4 py-2 bg-[#0A84FF] hover:bg-[#3395FF] active:scale-[0.97] text-white font-semibold rounded-[12px] transition-all text-[13px]"
+                      className="px-4 py-2 bg-accent-fill hover:bg-accent-fill/90 active:scale-[0.97] text-white font-semibold rounded-card transition-all text-[13px]"
                     >
                       Готово
                     </button>
@@ -2101,14 +2456,14 @@ export default function GraphVisualizer({
                     <button
                       type="button"
                       onClick={() => setModalMode(null)}
-                      className="px-4 py-2 bg-[#2C2C2E] hover:bg-[#3A3A3C] active:scale-[0.97] text-white font-medium rounded-[12px] transition-all text-[13px]"
+                      className="px-4 py-2 bg-fill hover:bg-fill-hover active:scale-[0.97] text-label font-medium rounded-card transition-all text-[13px]"
                     >
                       Отмена
                     </button>
                     <button
                       type="button"
                       onClick={handleApplyImport}
-                      className="px-4 py-2 bg-[#0A84FF] hover:bg-[#3395FF] active:scale-[0.97] text-white font-semibold rounded-[12px] transition-all flex items-center gap-1.5 text-[13px]"
+                      className="px-4 py-2 bg-accent-fill hover:bg-accent-fill/90 active:scale-[0.97] text-white font-semibold rounded-card transition-all flex items-center gap-1.5 text-[13px]"
                     >
                       <Check className="w-3.5 h-3.5" />
                       <span>Применить</span>
@@ -2121,7 +2476,9 @@ export default function GraphVisualizer({
         )}
       </AnimatePresence>
 
-      {/* Контекстное меню (UIMenu) */}
+      <AlertDialog state={dialog} onClose={closeDialog} />
+
+      {/* Контекстное меню */}
       <AnimatePresence>
         {contextMenu && (
           <motion.div
@@ -2143,19 +2500,19 @@ export default function GraphVisualizer({
               top: Math.min(contextMenu.screenY + 10, window.innerHeight - 220),
               transformOrigin: 'top left',
             }}
-            className="absolute z-50 backdrop-blur-2xl bg-[#2C2C2E]/90 border border-white/[0.1] rounded-[13px] p-[5px] shadow-[0_16px_40px_rgba(0,0,0,0.5)] min-w-[190px] flex flex-col gap-0.5 text-xs"
+            className="absolute z-50 material rounded-card p-[5px]  min-w-[190px] flex flex-col gap-0.5 text-xs"
           >
             {contextMenu.type === 'node' && (
               <>
-                <div className="px-2.5 py-1 text-[10px] text-[#8E8E93] font-semibold uppercase tracking-wider border-b border-[rgba(84,84,88,0.5)] mb-0.5">
+                <div className="px-2.5 py-1 text-[12px] text-secondary font-semibold  border-b border-separator mb-0.5">
                   Узел: {graphBuilderRef.current.nodes.get(contextMenu.id)?.label}
                 </div>
 
                 <button
                   onClick={() => handleRenameNode(contextMenu.id)}
-                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-white hover:bg-white/[0.08] rounded-[9px] transition-colors font-medium text-[13px]"
+                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
                 >
-                  <Pencil className="w-3.5 h-3.5 text-[#8E8E93]" />
+                  <Pencil className="w-3.5 h-3.5 text-secondary" />
                   <span>Переименовать</span>
                 </button>
 
@@ -2164,9 +2521,9 @@ export default function GraphVisualizer({
                     setStartNode(contextMenu.id);
                     setContextMenu(null);
                   }}
-                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-white hover:bg-white/[0.08] rounded-[9px] transition-colors font-medium text-[13px]"
+                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
                 >
-                  <Flag className="w-3.5 h-3.5 text-[#30D158]" />
+                  <Flag className="w-3.5 h-3.5 text-secondary" />
                   <span>Выбрать началом</span>
                 </button>
 
@@ -2175,17 +2532,29 @@ export default function GraphVisualizer({
                     setTargetNode(contextMenu.id);
                     setContextMenu(null);
                   }}
-                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-white hover:bg-white/[0.08] rounded-[9px] transition-colors font-medium text-[13px]"
+                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
                 >
-                  <Target className="w-3.5 h-3.5 text-[#FF453A]" />
+                  <Target className="w-3.5 h-3.5 text-secondary" />
                   <span>Выбрать целью</span>
                 </button>
 
-                <div className="my-0.5 border-t border-[rgba(84,84,88,0.5)]" />
+                <button
+                  onClick={() => {
+                    const id = contextMenu.id;
+                    setWaypoints(w => (w.includes(id) ? w.filter(x => x !== id) : [...w, id]));
+                    setContextMenu(null);
+                  }}
+                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
+                >
+                  <CornerDownRight className="w-3.5 h-3.5 text-secondary" />
+                  <span>{waypoints.includes(contextMenu.id) ? 'Убрать из маршрута' : 'Провести через узел'}</span>
+                </button>
+
+                <div className="my-0.5 border-t border-separator" />
 
                 <button
                   onClick={() => handleDeleteNode(contextMenu.id)}
-                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-[#FF453A] hover:bg-[#FF453A]/15 rounded-[9px] transition-colors font-medium text-[13px]"
+                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-danger hover:bg-danger/15 rounded-control transition-colors font-medium text-[13px]"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Удалить узел</span>
@@ -2195,33 +2564,33 @@ export default function GraphVisualizer({
 
             {contextMenu.type === 'edge' && (
               <>
-                <div className="px-2.5 py-1 text-[10px] text-[#8E8E93] font-semibold uppercase tracking-wider border-b border-[rgba(84,84,88,0.5)] mb-0.5">
+                <div className="px-2.5 py-1 text-[12px] text-secondary font-semibold  border-b border-separator mb-0.5">
                   Ребро
                 </div>
 
                 <button
                   onClick={() => handleEditEdgeWeight(contextMenu.id)}
-                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-white hover:bg-white/[0.08] rounded-[9px] transition-colors font-medium text-[13px]"
+                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
                 >
-                  <Scale className="w-3.5 h-3.5 text-[#8E8E93]" />
+                  <Scale className="w-3.5 h-3.5 text-secondary" />
                   <span>Изменить вес</span>
                 </button>
 
                 {directed && (
                   <button
                     onClick={() => handleReverseEdge(contextMenu.id)}
-                    className="flex items-center gap-2 px-2.5 py-[7px] text-left text-white hover:bg-white/[0.08] rounded-[9px] transition-colors font-medium text-[13px]"
+                    className="flex items-center gap-2 px-2.5 py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
                   >
-                    <ArrowLeftRight className="w-3.5 h-3.5 text-[#8E8E93]" />
+                    <ArrowLeftRight className="w-3.5 h-3.5 text-secondary" />
                     <span>Развернуть направление</span>
                   </button>
                 )}
 
-                <div className="my-0.5 border-t border-[rgba(84,84,88,0.5)]" />
+                <div className="my-0.5 border-t border-separator" />
 
                 <button
                   onClick={() => handleDeleteEdge(contextMenu.id)}
-                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-[#FF453A] hover:bg-[#FF453A]/15 rounded-[9px] transition-colors font-medium text-[13px]"
+                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-danger hover:bg-danger/15 rounded-control transition-colors font-medium text-[13px]"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Удалить ребро</span>

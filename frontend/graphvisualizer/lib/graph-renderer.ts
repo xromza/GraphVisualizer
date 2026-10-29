@@ -78,17 +78,24 @@ export class GraphRenderer {
 
   private readonly NODE_RADIUS = 25;
 
-  private readonly DEFAULT_NODE_BG = '#1E293B';
-  private readonly DEFAULT_NODE_BORDER = '#475569';
-  private readonly VISITED_NODE_BG = '#2E1065';
-  private readonly VISITED_NODE_BORDER = '#A855F7';
-  private readonly PATH_NODE_BG = '#064E3B';
-  private readonly PATH_NODE_BORDER = '#34D399';
-  private readonly PATH_EDGE_COLOR = '#10B981';
-  private readonly ACTIVE_NODE_BG = '#D97706';
-  private readonly ACTIVE_NODE_BORDER = '#FDE047';
-  private readonly HOVER_COLOR = '#38BDF8';
-  private readonly DEFAULT_EDGE_COLOR = '#334155';
+  private readonly FONT = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif';
+
+  /** Цвета берутся из тех же CSS-переменных, что и интерфейс, поэтому следуют светлой/тёмной теме. */
+  private palette = new Map<string, string>();
+  private readonly colorScheme = window.matchMedia('(prefers-color-scheme: light)');
+  private readonly handleSchemeChange = () => {
+    this.palette.clear();
+    this.render();
+  };
+
+  private color(name: string, alpha = 1): string {
+    let rgb = this.palette.get(name);
+    if (rgb === undefined) {
+      rgb = getComputedStyle(this.canvas).getPropertyValue(`--${name}`).trim() || '128 128 128';
+      this.palette.set(name, rgb);
+    }
+    return `rgb(${rgb} / ${alpha})`;
+  }
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -97,6 +104,7 @@ export class GraphRenderer {
     this.edges = [];
     this.setupCanvas();
     this.initEvents();
+    this.colorScheme.addEventListener('change', this.handleSchemeChange);
   }
 
   private setupCanvas(): void {
@@ -123,6 +131,12 @@ export class GraphRenderer {
     };
   }
 
+private waypointIds: string[] = [];
+
+  public setWaypoints(ids: string[]): void {
+    this.waypointIds = ids;
+  }
+
 public setStartAndTarget(startId: string | null, targetId: string | null): void {
     const now = performance.now();
     if (this.startNodeId !== startId) {
@@ -143,6 +157,7 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
   }
 
   public destroy(): void {
+    this.colorScheme.removeEventListener('change', this.handleSchemeChange);
     this.canvas.removeEventListener('mousedown', this.handleMouseDown);
     window.removeEventListener('mousemove', this.handleMouseMove);
     window.removeEventListener('mouseup', this.handleMouseUp);
@@ -480,7 +495,7 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
 
     const dotRadius = 1.2 / this.zoom;
 
-    this.ctx.fillStyle = '#263449';
+    this.ctx.fillStyle = this.color('separator');
     this.ctx.beginPath();
     for (let x = startX; x <= endX; x += step) {
       for (let y = startY; y <= endY; y += step) {
@@ -507,14 +522,14 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
       const isPathEdge = pathEdges.has(edge.id);
       const isHovered = edge.id === this.hoveredEdgeId;
 
-      let color = this.DEFAULT_EDGE_COLOR;
+      let color = this.color('stroke', 0.7);
       let width = 2;
 
       if (isPathEdge) {
-        color = this.PATH_EDGE_COLOR;
+        color = this.color('success');
         width = 4;
       } else if (isHovered) {
-        color = this.HOVER_COLOR;
+        color = this.color('accent');
         width = 3;
       }
 
@@ -547,17 +562,6 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
       this.ctx.moveTo(source.x, source.y);
       this.ctx.lineTo(endX, endY);
       this.ctx.stroke();
-
-      if (!exiting && this.edgeAnimations.has(edge.id) && progress < 1) {
-        this.ctx.strokeStyle = '#2DD4BF';
-        this.ctx.lineWidth = width + 1;
-        this.ctx.beginPath();
-        const sparkLen = 0.3;
-        const p1 = Math.max(0, progress - sparkLen);
-        this.ctx.moveTo(source.x + dx * p1, source.y + dy * p1);
-        this.ctx.lineTo(endX, endY);
-        this.ctx.stroke();
-      }
 
       if (this.directed && progress >= 1 && !exiting) {
         this.drawArrow(source, target, color);
@@ -603,36 +607,29 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
     const midX = (source.x + target.x) / 2;
     const midY = (source.y + target.y) / 2;
 
-    this.ctx.font = '500 12px Rubik, sans-serif';
+    this.ctx.font = `500 12px ${this.FONT}`;
     this.ctx.textAlign = 'center';
     this.ctx.textBaseline = 'middle';
 
     const text = weight.toString();
     const metrics = this.ctx.measureText(text);
-    const padding = 5;
-
-    if (isPathEdge) {
-      this.ctx.fillStyle = '#064E3B';
-      this.ctx.strokeStyle = '#34D399';
-    } else if (isHovered) {
-      this.ctx.fillStyle = '#0369A1';
-      this.ctx.strokeStyle = '#38BDF8';
-    } else {
-      this.ctx.fillStyle = '#0F172A';
-      this.ctx.strokeStyle = '#334155';
-    }
-
-    this.ctx.lineWidth = 1;
-
-    const boxW = metrics.width + padding * 2;
+    const boxW = Math.max(22, metrics.width + 12);
     const boxH = 18;
 
+    this.ctx.fillStyle = this.color('surface');
+    this.ctx.strokeStyle = isPathEdge
+      ? this.color('success')
+      : isHovered
+        ? this.color('accent')
+        : this.color('stroke', 0.5);
+    this.ctx.lineWidth = 1;
+
     this.ctx.beginPath();
-    this.ctx.rect(midX - boxW / 2, midY - boxH / 2, boxW, boxH);
+    this.ctx.roundRect(midX - boxW / 2, midY - boxH / 2, boxW, boxH, boxH / 2);
     this.ctx.fill();
     this.ctx.stroke();
 
-    this.ctx.fillStyle = isPathEdge ? '#6EE7B7' : '#F8FAFC';
+    this.ctx.fillStyle = isPathEdge ? this.color('success') : this.color('label');
     this.ctx.fillText(text, midX, midY);
   }
 
@@ -674,44 +671,57 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
       const isInPath = this.vizState?.path.includes(node.id) || false;
       const isHovered = this.hoveredNodeId === node.id;
 
-      let fillColor = this.DEFAULT_NODE_BG;
-      let strokeColor = this.DEFAULT_NODE_BORDER;
+      // Состояние различается не только цветом: толщиной обводки и внешним кольцом.
+      let fillColor = this.color('surface');
+      let strokeColor = this.color('stroke');
       let strokeWidth = 2;
+      let labelColor = this.color('label');
 
       if (isInPath) {
-        fillColor = this.PATH_NODE_BG;
-        strokeColor = this.PATH_NODE_BORDER;
+        fillColor = this.color('success', 0.2);
+        strokeColor = this.color('success');
         strokeWidth = 3.5;
       } else if (isActive) {
-        fillColor = this.ACTIVE_NODE_BG;
-        strokeColor = this.ACTIVE_NODE_BORDER;
+        fillColor = this.color('warning', 0.22);
+        strokeColor = this.color('warning');
         strokeWidth = 3.5;
       } else if (isVisited) {
-        fillColor = this.VISITED_NODE_BG;
-        strokeColor = this.VISITED_NODE_BORDER;
-        strokeWidth = 2.5;
+        fillColor = this.color('accent', 0.16);
+        strokeColor = this.color('accent');
+        strokeWidth = 2;
       } else if (isSelected) {
-        fillColor = '#0369A1';
-        strokeColor = '#38BDF8';
+        strokeColor = this.color('accent');
         strokeWidth = 3;
       }
 
       if (isHovered && !isInPath && !isActive) {
-        strokeColor = this.HOVER_COLOR;
+        strokeColor = this.color('accent');
         strokeWidth = 3;
       }
 
-      this.ctx.fillStyle = fillColor;
+      // Подложка нужна, чтобы полупрозрачная заливка не пропускала рёбра.
+      this.ctx.fillStyle = this.color('canvas');
       this.ctx.beginPath();
       this.ctx.arc(node.x, node.y, this.NODE_RADIUS, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.fillStyle = fillColor;
       this.ctx.fill();
 
       this.ctx.strokeStyle = strokeColor;
       this.ctx.lineWidth = strokeWidth;
       this.ctx.stroke();
 
-      this.ctx.fillStyle = isInPath ? '#A7F3D0' : '#F8FAFC';
-      this.ctx.font = '600 13px Rubik, sans-serif';
+      if (isActive) {
+        this.ctx.beginPath();
+        this.ctx.arc(node.x, node.y, this.NODE_RADIUS + 6, 0, Math.PI * 2);
+        this.ctx.strokeStyle = this.color('warning', 0.45);
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+      }
+
+      this.ctx.fillStyle = labelColor;
+      this.ctx.font = `600 13px ${this.FONT}`;
       this.ctx.textAlign = 'center';
       this.ctx.textBaseline = 'middle';
       this.ctx.fillText(node.label, node.x, node.y);
@@ -720,21 +730,22 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
         const dist = this.vizState.distances[node.id];
         const distText = dist === Infinity ? '∞' : dist.toFixed(1);
 
-        this.ctx.font = '500 11px Rubik, sans-serif';
-        this.ctx.fillStyle = isInPath ? '#34D399' : isVisited ? '#C084FC' : '#94A3B8';
-        this.ctx.fillText(distText, node.x, node.y + this.NODE_RADIUS + 12);
+        this.ctx.font = `500 12px ${this.FONT}`;
+        this.ctx.fillStyle = isInPath ? this.color('success') : this.color('secondary');
+        this.ctx.fillText(distText, node.x, node.y + this.NODE_RADIUS + 14);
       }
 
-      // ⭐️ Анимированные бейджи "СТАРТ" и "ЦЕЛЬ"
+      // Метки начала и цели: подписаны словом, цвет только дополняет
       const isStart = node.id === this.startNodeId;
       const isTarget = node.id === this.targetNodeId;
 
-      if (isStart || isTarget) {
-        const badgeText = isStart ? 'СТАРТ' : 'ЦЕЛЬ';
-        const badgeBg = isStart ? '#059669' : '#E11D48';
-        const badgeY = node.y - this.NODE_RADIUS - 14;
+      const waypointIndex = this.waypointIds.indexOf(node.id);
 
-        const badgeAnim = isStart ? this.startBadgeAnim : this.targetBadgeAnim;
+      if (isStart || isTarget || waypointIndex >= 0) {
+        const badgeText = isStart ? 'Начало' : isTarget ? 'Цель' : `Через ${waypointIndex + 1}`;
+        const badgeY = node.y - this.NODE_RADIUS - 16;
+
+        const badgeAnim = isStart ? this.startBadgeAnim : isTarget ? this.targetBadgeAnim : null;
         const progress = this.getAnimationProgress(badgeAnim ?? undefined);
         
         // Плавное появление: масштаб от 0.6 до 1.0 + Fade-In
@@ -753,29 +764,20 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
         this.ctx.scale(badgeScale, badgeScale);
         this.ctx.translate(-node.x, -badgeY);
 
-        this.ctx.font = '700 9px Rubik, sans-serif';
+        this.ctx.font = `600 11px ${this.FONT}`;
         const textMetrics = this.ctx.measureText(badgeText);
-        const badgeW = textMetrics.width + 12;
-        const badgeH = 16;
+        const badgeW = textMetrics.width + 14;
+        const badgeH = 18;
 
-        this.ctx.fillStyle = badgeBg;
+        this.ctx.fillStyle = this.color('fill-selected');
+        this.ctx.strokeStyle = this.color('stroke', 0.5);
+        this.ctx.lineWidth = 1;
         this.ctx.beginPath();
-        const radius = 5;
-        const x = node.x - badgeW / 2;
-        const y = badgeY - badgeH / 2;
-        this.ctx.moveTo(x + radius, y);
-        this.ctx.lineTo(x + badgeW - radius, y);
-        this.ctx.quadraticCurveTo(x + badgeW, y, x + badgeW, y + radius);
-        this.ctx.lineTo(x + badgeW, y + badgeH - radius);
-        this.ctx.quadraticCurveTo(x + badgeW, y + badgeH, x + badgeW - radius, y + badgeH);
-        this.ctx.lineTo(x + radius, y + badgeH);
-        this.ctx.quadraticCurveTo(x, y + badgeH, x, y + badgeH - radius);
-        this.ctx.lineTo(x, y + radius);
-        this.ctx.quadraticCurveTo(x, y, x + radius, y);
-        this.ctx.closePath();
+        this.ctx.roundRect(node.x - badgeW / 2, badgeY - badgeH / 2, badgeW, badgeH, badgeH / 2);
         this.ctx.fill();
+        this.ctx.stroke();
 
-        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.fillStyle = this.color('label');
         this.ctx.fillText(badgeText, node.x, badgeY);
         this.ctx.restore();
       }

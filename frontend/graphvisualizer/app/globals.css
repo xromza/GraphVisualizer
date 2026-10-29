@@ -1,33 +1,104 @@
-@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Семантические цвета. Значения — RGB-тройки, чтобы Tailwind мог
+  подмешивать прозрачность (bg-surface/80). Тёмная тема — по умолчанию,
+  светлая включается по системной настройке.
+*/
 :root {
-  --background: #0B0E14;
-  --foreground: #F8FAFC;
+  color-scheme: dark light;
+
+  --canvas: 0 0 0;
+  --surface: 28 28 30;
+  --fill: 44 44 46;
+  --fill-hover: 58 58 60;
+  --fill-selected: 99 99 102;
+  --separator: 56 56 58;
+  --stroke: 99 99 102;
+
+  --label: 255 255 255;
+  --secondary: 161 161 168;
+  --tertiary: 110 110 118;
+
+  --accent: 64 156 255;
+  --accent-fill: 0 113 227;
+  --success: 48 209 88;
+  --warning: 255 159 10;
+  --danger: 255 105 97;
+  --danger-fill: 255 69 58;
+
+  --shadow-float: 0 8px 32px rgb(0 0 0 / 0.4), 0 0 0 0.5px rgb(255 255 255 / 0.06);
+  --font-text: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-numeric: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Rubik', sans-serif;
+@media (prefers-color-scheme: light) {
+  :root {
+    --canvas: 242 242 247;
+    --surface: 255 255 255;
+    --fill: 235 235 240;
+    --fill-hover: 224 224 230;
+    --fill-selected: 255 255 255;
+    --separator: 216 216 220;
+    --stroke: 133 133 138;
+
+    --label: 0 0 0;
+    --secondary: 95 95 102;
+    --tertiary: 142 142 147;
+
+    --accent: 0 98 204;
+    --accent-fill: 0 98 204;
+    --success: 31 122 53;
+    --warning: 178 80 0;
+    --danger: 196 0 26;
+    --danger-fill: 196 0 26;
+
+    --shadow-float: 0 8px 28px rgb(0 0 0 / 0.14), 0 0 0 0.5px rgb(0 0 0 / 0.08);
+  }
 }
 
-html,
-body {
-  height: 100%;
-  overflow: hidden;
-  background: var(--background);
-  color: var(--foreground);
-  font-family: 'Rubik', sans-serif;
+/* Без полупрозрачности материалы становятся сплошными. */
+@media (prefers-reduced-transparency: reduce) {
+  .material {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: rgb(var(--surface));
+  }
 }
 
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
+@layer base {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+    background: rgb(var(--canvas));
+    color: rgb(var(--label));
+    font-family: var(--font-text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Плавающий слой управления: единственное место, где используется размытие. */
+  .material {
+    background-color: rgb(var(--surface) / 0.78);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+    backdrop-filter: saturate(180%) blur(24px);
+    box-shadow: var(--shadow-float);
+  }
 }
