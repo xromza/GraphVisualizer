@@ -51,7 +51,7 @@ public class StreamController {
         Graph graph = Graph.of(request.nodes(), request.edges(), request.directed());
 
         algorithmService.consumeVisualization(graph, request.startNodeId(), request.targetNodeId(),
-                request.algorithmType(), sink);
+                request.waypointNodeIds(), request.algorithmType(), sink);
 
         Flux<ServerSentEvent<AlgorithmStepDto>> stepStream = sink.asFlux()
                 .map(step -> ServerSentEvent.<AlgorithmStepDto>builder()
