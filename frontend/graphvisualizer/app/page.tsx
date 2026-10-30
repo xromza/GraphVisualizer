@@ -122,7 +122,7 @@ export default function Home() {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className="relative w-full h-screen overflow-hidden bg-canvas">
+    <div className="relative w-full h-dvh overflow-hidden bg-canvas">
       <GraphVisualizer
         onAlgorithmRun={handleAlgorithmRun}
         onStop={handleStop}
@@ -139,7 +139,7 @@ export default function Home() {
       {error && (
         <div
           role="alert"
-          className="absolute top-4 right-4 z-50 material rounded-card px-4 py-3 max-w-sm"
+          className="absolute top-[max(1rem,env(safe-area-inset-top))] inset-x-4 md:inset-x-auto md:right-4 z-50 material rounded-card px-4 py-3 md:max-w-sm"
         >
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 shrink-0 text-danger mt-0.5" aria-hidden="true" />

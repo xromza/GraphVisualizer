@@ -150,17 +150,19 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
   }
 
   private initEvents(): void {
-    this.canvas.addEventListener('mousedown', this.handleMouseDown);
-    window.addEventListener('mousemove', this.handleMouseMove);
-    window.addEventListener('mouseup', this.handleMouseUp);
+    this.canvas.addEventListener('pointerdown', this.handleMouseDown);
+    window.addEventListener('pointermove', this.handleMouseMove);
+    window.addEventListener('pointerup', this.handleMouseUp);
+    window.addEventListener('pointercancel', this.handleMouseUp);
     this.canvas.addEventListener('wheel', this.handleWheel, { passive: false });
   }
 
   public destroy(): void {
     this.colorScheme.removeEventListener('change', this.handleSchemeChange);
-    this.canvas.removeEventListener('mousedown', this.handleMouseDown);
-    window.removeEventListener('mousemove', this.handleMouseMove);
-    window.removeEventListener('mouseup', this.handleMouseUp);
+    this.canvas.removeEventListener('pointerdown', this.handleMouseDown);
+    window.removeEventListener('pointermove', this.handleMouseMove);
+    window.removeEventListener('pointerup', this.handleMouseUp);
+    window.removeEventListener('pointercancel', this.handleMouseUp);
     this.canvas.removeEventListener('wheel', this.handleWheel);
     if (this.animationFrameId !== null) {
       cancelAnimationFrame(this.animationFrameId);
@@ -170,7 +172,7 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
     this.edgeAnimations.clear();
   }
 
-  private getMousePos(e: MouseEvent): { x: number; y: number } {
+  private getMousePos(e: MouseEvent | PointerEvent): { x: number; y: number } {
     const rect = this.canvas.getBoundingClientRect();
     return {
       x: e.clientX - rect.left,
@@ -178,10 +180,32 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
     };
   }
 
-  private handleMouseDown = (e: MouseEvent): void => {
-    if (e.button !== 0 && e.button !== 1) return;
+  /** Активные указатели: два пальца — щипок для масштабирования и перемещения. */
+  private pointers = new Map<number, { x: number; y: number }>();
+  private pinch: { dist: number; zoom: number; anchor: { x: number; y: number } } | null = null;
+
+  private pointerCenter(): { x: number; y: number; dist: number } {
+    const [a, b] = Array.from(this.pointers.values());
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, dist: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)) };
+  }
+
+  private handleMouseDown = (e: PointerEvent): void => {
+    if (e.pointerType === 'mouse' && e.button !== 0 && e.button !== 1) return;
 
     const screen = this.getMousePos(e);
+    this.pointers.set(e.pointerId, screen);
+
+    if (this.pointers.size === 2) {
+      // Второй палец: отменяем перетаскивание/панорамирование и начинаем щипок.
+      this.draggedNode = null;
+      this.hasDraggedNode = false;
+      this.isPanning = false;
+      const c = this.pointerCenter();
+      this.pinch = { dist: c.dist, zoom: this.zoom, anchor: this.screenToWorld(c.x, c.y) };
+      return;
+    }
+    if (this.pointers.size > 2) return;
+
     const world = this.screenToWorld(screen.x, screen.y);
     const clickedNode = this.getNodeAt(world.x, world.y);
 
@@ -199,8 +223,19 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
     this.hasPanned = false;
   };
 
-  private handleMouseMove = (e: MouseEvent): void => {
+  private handleMouseMove = (e: PointerEvent): void => {
     const screen = this.getMousePos(e);
+    if (this.pointers.has(e.pointerId)) this.pointers.set(e.pointerId, screen);
+
+    if (this.pinch && this.pointers.size === 2) {
+      const c = this.pointerCenter();
+      this.zoom = Math.min(Math.max(this.pinch.zoom * (c.dist / this.pinch.dist), 0.2), 4.0);
+      this.pan.x = c.x - this.pinch.anchor.x * this.zoom;
+      this.pan.y = c.y - this.pinch.anchor.y * this.zoom;
+      this.render();
+      return;
+    }
+
     const world = this.screenToWorld(screen.x, screen.y);
 
     if (this.draggedNode) {
@@ -256,9 +291,28 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
     }
   };
 
-  private handleMouseUp = (e: MouseEvent): void => {
+  private handleMouseUp = (e: PointerEvent): void => {
     const screen = this.getMousePos(e);
     const world = this.screenToWorld(screen.x, screen.y);
+
+    if (!this.pointers.delete(e.pointerId)) return;
+
+    if (this.pinch) {
+      this.pinch = null;
+      // Остался один палец: продолжаем панорамирование, но не считаем жест кликом.
+      const rest = this.pointers.values().next().value;
+      if (rest) {
+        this.isPanning = true;
+        this.hasPanned = true;
+        this.panStart = { x: rest.x - this.pan.x, y: rest.y - this.pan.y };
+      }
+      return;
+    }
+    if (e.type === 'pointercancel') {
+      this.draggedNode = null;
+      this.isPanning = false;
+      return;
+    }
 
     if (this.draggedNode) {
       if (!this.hasDraggedNode && this.isInteractive) {

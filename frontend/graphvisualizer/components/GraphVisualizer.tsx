@@ -466,7 +466,7 @@ function CustomSelect({
           if (e.key === 'Escape') setIsOpen(false);
         }}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full px-3 py-2 bg-fill rounded-control text-[13px] font-medium text-label flex items-center justify-between transition-all duration-200 select-none disabled:opacity-40 disabled:cursor-not-allowed active:bg-fill-hover ${
+        className={`w-full px-3 py-3 md:py-2 bg-fill rounded-control text-[13px] font-medium text-label flex items-center justify-between transition-all duration-200 select-none disabled:opacity-40 disabled:cursor-not-allowed active:bg-fill-hover ${
           isOpen ? 'ring-2 ring-accent/60' : ''
         }`}
       >
@@ -519,7 +519,7 @@ function CustomSelect({
                   onChange('');
                   setIsOpen(false);
                 }}
-                className={`w-full px-2.5 py-1.5 rounded-control text-left transition-colors flex items-center justify-between ${
+                className={`w-full px-2.5 py-2.5 md:py-1.5 rounded-control text-left transition-colors flex items-center justify-between ${
                   value === ''
                     ? 'text-accent font-semibold'
                     : 'text-secondary hover:text-label hover:bg-fill-hover'
@@ -542,7 +542,7 @@ function CustomSelect({
                     onChange(option.value);
                     setIsOpen(false);
                   }}
-                  className={`w-full px-2.5 py-1.5 rounded-control text-left transition-colors flex items-center justify-between ${
+                  className={`w-full px-2.5 py-2.5 md:py-1.5 rounded-control text-left transition-colors flex items-center justify-between ${
                     isSelected
                       ? 'text-accent font-semibold'
                       : 'text-label hover:bg-fill-hover'
@@ -801,6 +801,8 @@ export default function GraphVisualizer({
   const [dragHoverSide, setDragHoverSide] = useState<PanelSide>('right');
   const dragControls = useDragControls();
 
+  // Компактная раскладка (телефон): панель — нижний лист, инструменты — только значки.
+  const [isCompact, setIsCompact] = useState(false);
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1200
   );
@@ -836,6 +838,15 @@ export default function GraphVisualizer({
       layoutCancelRef.current?.();
       layoutAnimCancelRef.current?.();
     };
+  }, []);
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 767px)');
+    setIsCompact(query.matches);
+    if (query.matches) setIsPanelOpen(false);
+    const onChange = (e: MediaQueryListEvent) => setIsCompact(e.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
   }, []);
 
   useEffect(() => {
@@ -885,11 +896,15 @@ export default function GraphVisualizer({
 
     const rect = canvasRef.current.getBoundingClientRect();
     let targetScreenX = rect.width / 2;
-    if (isPanelOpen) {
+    let targetScreenY = rect.height / 2;
+    if (isPanelOpen && isCompact) {
+      // Лист закрывает нижнюю часть экрана — центрируем по видимой верхней.
+      targetScreenY = (rect.height - Math.min(rect.height * 0.78, 640)) / 2 + 24;
+    } else if (isPanelOpen) {
       targetScreenX =
         panelSide === 'right' ? (rect.width - PANEL_SPACE) / 2 : (rect.width + PANEL_SPACE) / 2;
     }
-    const center = rendererRef.current.screenToWorld(targetScreenX, rect.height / 2);
+    const center = rendererRef.current.screenToWorld(targetScreenX, targetScreenY);
 
     const updateAndPreserveVisuals = () => {
       if (rendererRef.current) {
@@ -1403,11 +1418,11 @@ export default function GraphVisualizer({
   const hasStartedRun = isPlaying || stepsCount > 0;
 
   const centerX = useMemo(() => {
-    if (!isPanelOpen) return windowWidth / 2;
+    if (!isPanelOpen || isCompact) return windowWidth / 2;
     return panelSide === 'right'
       ? (windowWidth - PANEL_SPACE) / 2
       : (windowWidth + PANEL_SPACE) / 2;
-  }, [isPanelOpen, panelSide, windowWidth]);
+  }, [isPanelOpen, isCompact, panelSide, windowWidth]);
 
   const targetPanelX = useMemo(() => {
     if (!isPanelOpen) {
@@ -1564,14 +1579,14 @@ export default function GraphVisualizer({
   }[];
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-canvas text-label select-none font-sans antialiased">
+    <div className="relative w-screen h-dvh overflow-hidden bg-canvas text-label select-none font-sans antialiased">
       <canvas
         ref={canvasRef}
-        onMouseDown={e => {
+        onPointerDown={e => {
           mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
         }}
         onClick={handleCanvasClick}
-        className={`absolute inset-0 w-full h-full z-0 ${
+        className={`absolute inset-0 w-full h-full z-0 touch-none ${
           tool === 'addNode'
             ? 'cursor-crosshair'
             : tool === 'delete'
@@ -1583,7 +1598,7 @@ export default function GraphVisualizer({
       />
 
       {/* Верхний бар управления */}
-      <CenteredAt x={centerX} className="top-4 z-20">
+      <CenteredAt x={centerX} className="top-[max(1rem,env(safe-area-inset-top))] z-20">
         <MorphingContainer
           className="pointer-events-auto shrink-0 box-content material rounded-panel  text-xs"
           innerClassName="relative w-max max-w-[calc(100vw-3rem)] p-1.5"
@@ -1606,7 +1621,7 @@ export default function GraphVisualizer({
                 className="flex items-center gap-2"
               >
                 <AnimatePresence initial={false}>
-                  {!isPanelOpen && (
+                  {!isPanelOpen && !isCompact && (
                     <CollapsibleX key="algo-select-player" gap={8}>
                       <div className="w-48">
                         <CustomSelect
@@ -1627,7 +1642,7 @@ export default function GraphVisualizer({
                   transition={SPRING_SNAPPY}
                   onClick={handleRunAlgorithm}
                   disabled={!selectedAlgorithm || !startNode || !targetNode}
-                  className="px-4 py-2 rounded-card bg-accent-fill hover:bg-accent-fill/90 active:bg-accent-fill text-white font-semibold flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-[13px] shrink-0"
+                  className="px-4 h-11 md:h-auto md:py-2 rounded-card bg-accent-fill hover:bg-accent-fill/90 active:bg-accent-fill text-white font-semibold flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-[13px] shrink-0"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
                   <span>Запустить</span>
@@ -1652,7 +1667,7 @@ export default function GraphVisualizer({
               >
                 <div className="flex items-center gap-2 p-0.5">
                   <Tooltip label={isPlaying ? 'Остановить' : 'Перезапустить'} shortcut="Пробел">
-                  <div className="relative w-7 h-7 shrink-0">
+                  <div className="relative w-10 h-10 md:w-7 md:h-7 shrink-0">
                     <AnimatePresence initial={false}>
                       {isPlaying ? (
                         <motion.button
@@ -1704,9 +1719,11 @@ export default function GraphVisualizer({
                         type="button"
                         onClick={action}
                         disabled={disabled}
-                        className="w-7 h-7 rounded-control text-secondary hover:text-label hover:bg-fill-hover flex items-center justify-center disabled:opacity-20 transition-colors"
+                        className={`w-10 h-10 md:w-7 md:h-7 rounded-control text-secondary hover:text-label hover:bg-fill-hover flex items-center justify-center disabled:opacity-20 transition-colors ${
+                          idx === 0 || idx === 3 ? 'max-md:hidden' : ''
+                        }`}
                       >
-                        <Icon className="w-3.5 h-3.5" />
+                        <Icon className="w-4 h-4 md:w-3.5 md:h-3.5" />
                       </motion.button>
                       </Tooltip>
                     ))}
@@ -1722,7 +1739,7 @@ export default function GraphVisualizer({
                             max={stepsCount - 1}
                             value={currentStepIndex}
                             onChange={e => onStepChange?.(Number(e.target.value))}
-                            className="w-20 sm:w-28 cursor-pointer accent-accent"
+                            className="w-24 sm:w-28 cursor-pointer accent-accent"
                           />
                           <span className="text-[12px] tabular-nums text-accent shrink-0 font-semibold">
                             {currentStepIndex + 1}/{stepsCount}
@@ -1733,7 +1750,7 @@ export default function GraphVisualizer({
                   </AnimatePresence>
 
                   <AnimatePresence initial={false}>
-                    {!isPanelOpen && (
+                    {!isPanelOpen && !isCompact && (
                       <CollapsibleX key="player-algo-select" gap={10}>
                         <div className="w-48">
                           <CustomSelect
@@ -1754,7 +1771,7 @@ export default function GraphVisualizer({
                     transition={SPRING_SNAPPY}
                     type="button"
                     onClick={onReset}
-                    className="w-7 h-7 rounded-control text-secondary hover:text-danger hover:bg-danger/15 flex items-center justify-center transition-colors shrink-0"
+                    className="w-10 h-10 md:w-7 md:h-7 rounded-control text-secondary hover:text-danger hover:bg-danger/15 flex items-center justify-center transition-colors shrink-0"
                     aria-label="Сбросить обход"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -1836,13 +1853,14 @@ export default function GraphVisualizer({
             whileTap={{ scale: 0.96 }}
             onClick={() => setIsPanelOpen(true)}
             aria-keyshortcuts="P"
-            className={`absolute top-4 z-20 material rounded-card px-3.5 py-2  flex items-center gap-2 text-[13px] font-semibold text-label hover:bg-fill-hover/60 transition-colors ${
-              panelSide === 'left' ? 'left-4' : 'right-4'
+            aria-label="Параметры"
+            className={`absolute z-20 material rounded-card w-11 h-11 md:w-auto md:h-auto md:px-3.5 md:py-2 justify-center flex items-center gap-2 text-[13px] font-semibold text-label hover:bg-fill-hover/60 transition-colors bottom-[max(1.25rem,env(safe-area-inset-bottom))] md:bottom-auto md:top-4 ${
+              panelSide === 'left' ? 'right-4 md:right-auto md:left-4' : 'right-4'
             }`}
           >
-            <Settings className="w-3.5 h-3.5 text-secondary" />
-            <span>Параметры</span>
-            <Keycap>P</Keycap>
+            <Settings className="w-5 h-5 md:w-3.5 md:h-3.5 text-secondary" />
+            <span className="max-md:hidden">Параметры</span>
+            <Keycap className="max-md:hidden">P</Keycap>
           </motion.button>
         )}
       </AnimatePresence>
@@ -1870,38 +1888,45 @@ export default function GraphVisualizer({
 
       {/* Боковая панель управления */}
       <motion.div
-        drag="x"
+        drag={isCompact ? 'y' : 'x'}
+        dragConstraints={isCompact ? { top: 0, bottom: 0 } : undefined}
+        dragElastic={isCompact ? { top: 0, bottom: 0.6 } : undefined}
+        dragSnapToOrigin={isCompact}
         dragListener={false}
         dragControls={dragControls}
         dragMomentum={false}
-        onDragStart={() => setIsDraggingPanel(true)}
+        onDragStart={() => setIsDraggingPanel(!isCompact)}
         onDrag={(_e, info) => {
+          if (isCompact) return;
           const isLeft = info.point.x < windowWidth / 2;
           setDragHoverSide(isLeft ? 'left' : 'right');
         }}
         onDragEnd={(_e, info) => {
           setIsDraggingPanel(false);
+          if (isCompact) {
+            if (info.offset.y > 90 || info.velocity.y > 500) setIsPanelOpen(false);
+            return;
+          }
           const isLeft = info.point.x < windowWidth / 2;
           setPanelSide(isLeft ? 'left' : 'right');
         }}
-        animate={{
-          x: targetPanelX,
-          opacity: isPanelOpen ? 1 : 0,
-        }}
-        initial={{
-          x: windowWidth + 50,
-          opacity: 0,
-        }}
+        animate={
+          isCompact
+            ? { x: 0, y: isPanelOpen ? 0 : '105%', opacity: 1 }
+            : { x: targetPanelX, y: 0, opacity: isPanelOpen ? 1 : 0 }
+        }
+        initial={isCompact ? { x: 0, y: '105%', opacity: 1 } : { x: windowWidth + 50, y: 0, opacity: 0 }}
         transition={{
           ...SPRING_SMOOTH,
           opacity: { duration: isPanelOpen ? 0.28 : 0.16, ease: APPLE_EASE },
         }}
         style={{
-          width: PANEL_WIDTH,
-          left: 0,
+          ...(isCompact ? { height: 'min(78dvh, 640px)' } : { width: PANEL_WIDTH, left: 0 }),
           pointerEvents: isPanelOpen ? 'auto' : 'none',
         }}
-        className={`absolute top-4 bottom-4 z-20 flex flex-col rounded-panel material  overflow-hidden ${
+        className={`absolute z-20 flex flex-col material overflow-hidden ${
+          isCompact ? 'inset-x-0 bottom-0 rounded-t-panel' : 'top-4 bottom-4 rounded-panel'
+        } ${
           isDraggingPanel ? 'ring-1 ring-accent/40' : ''
         }`}
       >
@@ -1927,10 +1952,12 @@ export default function GraphVisualizer({
 
               <button
                 onClick={() => setIsPanelOpen(false)}
-                className="w-7 h-7 rounded-full bg-fill active:scale-95 flex items-center justify-center text-secondary hover:text-label transition-all"
+                className="w-9 h-9 md:w-7 md:h-7 rounded-full bg-fill active:scale-95 flex items-center justify-center text-secondary hover:text-label transition-all"
                 aria-label="Свернуть панель"
               >
-                {panelSide === 'right' ? (
+                {isCompact ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : panelSide === 'right' ? (
                   <ChevronRight className="w-4 h-4" />
                 ) : (
                   <ChevronLeft className="w-4 h-4" />
@@ -1940,8 +1967,10 @@ export default function GraphVisualizer({
           </div>
         </div>
 
+        {/* На телефоне прокручивается весь лист целиком; на десктопе обёртка не влияет на раскладку. */}
+        <div className="flex flex-col flex-1 min-h-0 max-md:overflow-y-auto md:contents">
         {/* Контент: плоские секции с разделителями */}
-        <div className="flex-1 overflow-y-auto px-4 py-3.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div className="md:flex-1 md:overflow-y-auto px-4 py-3.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <SectionLabel className="mb-1.5">Алгоритм</SectionLabel>
           <CustomSelect
             options={algorithms.map(algo => ({ value: algo.id, label: algo.name }))}
@@ -2148,7 +2177,7 @@ export default function GraphVisualizer({
         </div>
 
         {/* Нижний тулбар */}
-        <div className="p-3.5 border-t border-separator space-y-2.5">
+        <div className="p-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))] border-t border-separator space-y-2.5">
           <div>
             <SectionLabel className="mb-1.5">Размещение узлов</SectionLabel>
             {/* Нативный UISegmentedControl */}
@@ -2241,13 +2270,17 @@ export default function GraphVisualizer({
             <span>Очистить холст</span>
           </button>
         </div>
+        </div>
       </motion.div>
 
       {/* Нижний док инструментов */}
       {/* Нижний док инструментов */}
-      <CenteredAt x={centerX} className="bottom-5 z-20">
+      <CenteredAt
+        x={centerX}
+        className={`bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-20 ${isCompact && isPanelOpen ? 'invisible' : ''}`}
+      >
         <div className="relative flex flex-col items-center">
-          <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 pointer-events-none z-30 w-max">
+          <div className="absolute bottom-full mb-[4.75rem] md:mb-3 left-1/2 -translate-x-1/2 pointer-events-none z-30 w-max">
             <AnimatePresence>
               {edgeStart && (
                 <motion.div
@@ -2299,13 +2332,14 @@ export default function GraphVisualizer({
                       }}
                       disabled={isPlaying}
                       aria-keyshortcuts={hotkey}
-                      className={`relative z-10 flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold rounded-card whitespace-nowrap transition-colors disabled:opacity-40 ${
+                      aria-label={label}
+                      className={`relative z-10 flex items-center justify-center gap-2 w-11 h-11 md:w-auto md:h-auto md:px-4 md:py-2.5 text-[13px] font-semibold rounded-card whitespace-nowrap transition-colors disabled:opacity-40 ${
                         isActive ? 'text-label' : 'text-secondary hover:text-label'
                       }`}
                     >
-                      <ToolIcon className={`relative z-10 h-4 w-4 ${isActive ? 'text-accent' : ''}`} />
-                      <span className="relative z-10">{label}</span>
-                      <Keycap className="relative z-10 -ml-0.5">{hotkey}</Keycap>
+                      <ToolIcon className={`relative z-10 h-5 w-5 md:h-4 md:w-4 ${isActive ? 'text-accent' : ''}`} />
+                      <span className="relative z-10 max-md:hidden">{label}</span>
+                      <Keycap className="relative z-10 -ml-0.5 max-md:hidden">{hotkey}</Keycap>
                     </motion.button>
                   );
                 })}
@@ -2313,6 +2347,7 @@ export default function GraphVisualizer({
             </MorphingContainer>
 
             {/* Stepper веса ребра, вынесенный в абсолют справа — не смещает основные кнопки */}
+            <div className="absolute pointer-events-none bottom-full mb-3 left-1/2 -translate-x-1/2 md:bottom-auto md:mb-0 md:left-full md:translate-x-0 md:ml-3 md:top-0 md:h-full md:flex md:items-center">
             <AnimatePresence initial={false}>
               {tool === 'addEdge' && (
                 <motion.div
@@ -2330,7 +2365,7 @@ export default function GraphVisualizer({
                     scale: 0.96,
                     transition: { duration: 0.15, ease: 'easeOut' },
                   }}
-                  className="absolute left-full ml-3 top-0 bottom-0 my-auto h-fit pointer-events-auto material rounded-panel px-3.5 py-2  flex items-center gap-2.5 whitespace-nowrap"
+                  className="pointer-events-auto material rounded-panel px-3.5 py-2  flex items-center gap-2.5 whitespace-nowrap"
                 >
                   <span className="text-[12px] text-secondary font-medium">Вес:</span>
                   <div className="flex items-center gap-1">
@@ -2342,7 +2377,7 @@ export default function GraphVisualizer({
                         const next = Math.max(0.5, Math.round((current - 0.5) * 10) / 10);
                         setEdgeWeightInput(next.toString());
                       }}
-                      className="w-7 h-7 flex items-center justify-center rounded-control bg-fill text-secondary hover:text-label active:scale-90 transition-all disabled:opacity-30"
+                      className="w-9 h-9 md:w-7 md:h-7 flex items-center justify-center rounded-control bg-fill text-secondary hover:text-label active:scale-90 transition-all disabled:opacity-30"
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
@@ -2357,7 +2392,7 @@ export default function GraphVisualizer({
                         const next = Math.round((current + 0.5) * 10) / 10;
                         setEdgeWeightInput(next.toString());
                       }}
-                      className="w-7 h-7 flex items-center justify-center rounded-control bg-fill text-secondary hover:text-label active:scale-90 transition-all disabled:opacity-30"
+                      className="w-9 h-9 md:w-7 md:h-7 flex items-center justify-center rounded-control bg-fill text-secondary hover:text-label active:scale-90 transition-all disabled:opacity-30"
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
@@ -2365,6 +2400,7 @@ export default function GraphVisualizer({
                 </motion.div>
               )}
             </AnimatePresence>
+            </div>
           </div>
         </div>
       </CenteredAt>
@@ -2510,7 +2546,7 @@ export default function GraphVisualizer({
 
                 <button
                   onClick={() => handleRenameNode(contextMenu.id)}
-                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
+                  className="flex items-center gap-2 px-2.5 py-2.5 md:py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
                 >
                   <Pencil className="w-3.5 h-3.5 text-secondary" />
                   <span>Переименовать</span>
@@ -2521,7 +2557,7 @@ export default function GraphVisualizer({
                     setStartNode(contextMenu.id);
                     setContextMenu(null);
                   }}
-                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
+                  className="flex items-center gap-2 px-2.5 py-2.5 md:py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
                 >
                   <Flag className="w-3.5 h-3.5 text-secondary" />
                   <span>Выбрать началом</span>
@@ -2532,7 +2568,7 @@ export default function GraphVisualizer({
                     setTargetNode(contextMenu.id);
                     setContextMenu(null);
                   }}
-                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
+                  className="flex items-center gap-2 px-2.5 py-2.5 md:py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
                 >
                   <Target className="w-3.5 h-3.5 text-secondary" />
                   <span>Выбрать целью</span>
@@ -2544,7 +2580,7 @@ export default function GraphVisualizer({
                     setWaypoints(w => (w.includes(id) ? w.filter(x => x !== id) : [...w, id]));
                     setContextMenu(null);
                   }}
-                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
+                  className="flex items-center gap-2 px-2.5 py-2.5 md:py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
                 >
                   <CornerDownRight className="w-3.5 h-3.5 text-secondary" />
                   <span>{waypoints.includes(contextMenu.id) ? 'Убрать из маршрута' : 'Провести через узел'}</span>
@@ -2554,7 +2590,7 @@ export default function GraphVisualizer({
 
                 <button
                   onClick={() => handleDeleteNode(contextMenu.id)}
-                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-danger hover:bg-danger/15 rounded-control transition-colors font-medium text-[13px]"
+                  className="flex items-center gap-2 px-2.5 py-2.5 md:py-[7px] text-left text-danger hover:bg-danger/15 rounded-control transition-colors font-medium text-[13px]"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Удалить узел</span>
@@ -2570,7 +2606,7 @@ export default function GraphVisualizer({
 
                 <button
                   onClick={() => handleEditEdgeWeight(contextMenu.id)}
-                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
+                  className="flex items-center gap-2 px-2.5 py-2.5 md:py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
                 >
                   <Scale className="w-3.5 h-3.5 text-secondary" />
                   <span>Изменить вес</span>
@@ -2579,7 +2615,7 @@ export default function GraphVisualizer({
                 {directed && (
                   <button
                     onClick={() => handleReverseEdge(contextMenu.id)}
-                    className="flex items-center gap-2 px-2.5 py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
+                    className="flex items-center gap-2 px-2.5 py-2.5 md:py-[7px] text-left text-label hover:bg-fill-hover rounded-control transition-colors font-medium text-[13px]"
                   >
                     <ArrowLeftRight className="w-3.5 h-3.5 text-secondary" />
                     <span>Развернуть направление</span>
@@ -2590,7 +2626,7 @@ export default function GraphVisualizer({
 
                 <button
                   onClick={() => handleDeleteEdge(contextMenu.id)}
-                  className="flex items-center gap-2 px-2.5 py-[7px] text-left text-danger hover:bg-danger/15 rounded-control transition-colors font-medium text-[13px]"
+                  className="flex items-center gap-2 px-2.5 py-2.5 md:py-[7px] text-left text-danger hover:bg-danger/15 rounded-control transition-colors font-medium text-[13px]"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Удалить ребро</span>
