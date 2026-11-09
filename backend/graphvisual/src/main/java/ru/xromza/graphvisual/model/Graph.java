@@ -41,7 +41,7 @@ public record Graph(
 
         if (!isDirected) {
             for (Edge edge : flatEdges) {
-                if (edge.sourceId() != null && !edge.sourceId().equals(edge.targetId())) {
+                if (!edge.sourceId().equals(edge.targetId())) {
                     adjacency.computeIfAbsent(edge.targetId(), e -> new ArrayList<>())
                             .add(new Edge(edge.targetId() + "-rev", edge.targetId(), edge.sourceId(), edge.weight()));
                 }

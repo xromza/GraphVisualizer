@@ -107,10 +107,10 @@ public class AlgorithmService {
         step.distances().forEach((id, d) -> distances.put(id, d + offset));
 
         List<String> path = step.path();
-        if (!prefix.isEmpty() && !path.isEmpty()) {
+        if (!path.isEmpty()) {
             path = new ArrayList<>(prefix);
             path.addAll(step.path().subList(1, step.path().size()));
-        } else if (path.isEmpty() && !AlgorithmStatus.COMPLETED.equals(step.status())) {
+        } else if (!AlgorithmStatus.COMPLETED.equals(step.status())) {
             path = prefix;
         }
 
