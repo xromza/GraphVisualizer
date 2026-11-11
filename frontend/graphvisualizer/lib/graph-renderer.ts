@@ -560,7 +560,11 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
     this.ctx.fill();
   }
 
+  /** Плашки весов, уже нарисованные в этом кадре (чтобы не накладывать друг на друга). */
+  private placedWeightLabels: Array<{ x: number; y: number; w: number; h: number }> = [];
+
   private drawEdges(selectedNodes: Set<string>): void {
+    this.placedWeightLabels = [];
     const pathEdges = this.getPathEdges();
 
     const allEdges = [
@@ -658,9 +662,6 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
     isPathEdge: boolean,
     isHovered: boolean
   ): void {
-    const midX = (source.x + target.x) / 2;
-    const midY = (source.y + target.y) / 2;
-
     this.ctx.font = `500 12px ${this.FONT}`;
     this.ctx.textAlign = 'center';
     this.ctx.textBaseline = 'middle';
@@ -669,6 +670,23 @@ public setStartAndTarget(startId: string | null, targetId: string | null): void 
     const metrics = this.ctx.measureText(text);
     const boxW = Math.max(22, metrics.width + 12);
     const boxH = 18;
+
+    // Плашка лежит на ребре: по умолчанию в середине, при наложении на другую — сдвигается вдоль ребра.
+    let midX = (source.x + target.x) / 2;
+    let midY = (source.y + target.y) / 2;
+    for (const t of [0.5, 0.4, 0.6, 0.33, 0.67]) {
+      const x = source.x + (target.x - source.x) * t;
+      const y = source.y + (target.y - source.y) * t;
+      const clear = !this.placedWeightLabels.some(
+        l => Math.abs(l.x - x) < (l.w + boxW) / 2 && Math.abs(l.y - y) < (l.h + boxH) / 2
+      );
+      if (clear) {
+        midX = x;
+        midY = y;
+        break;
+      }
+    }
+    this.placedWeightLabels.push({ x: midX, y: midY, w: boxW, h: boxH });
 
     this.ctx.fillStyle = this.color('surface');
     this.ctx.strokeStyle = isPathEdge

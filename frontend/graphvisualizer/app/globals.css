@@ -102,3 +102,27 @@
     box-shadow: var(--shadow-float);
   }
 }
+
+/* Логотип в окне «О приложении»: наведённый узел или ребро темнеет, слегка вырастает и отбрасывает тень. */
+.logo-mark .logo-part {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: fill 0.18s ease, stroke 0.18s ease, transform 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    filter 0.22s ease;
+}
+.logo-mark .logo-node { fill: #0a84ff; }
+.logo-mark .logo-edge { stroke: #0a84ff; stroke-linecap: round; }
+.logo-mark .logo-node:hover {
+  fill: #0066d6;
+  transform: scale(1.1);
+  filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.35));
+}
+.logo-mark .logo-edge-g:hover .logo-edge {
+  stroke: #0066d6;
+  transform: scale(1.04);
+  filter: drop-shadow(0 5px 6px rgb(0 0 0 / 0.35));
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-mark .logo-part { transition: none; }
+  .logo-mark .logo-part:hover { transform: none; }
+}

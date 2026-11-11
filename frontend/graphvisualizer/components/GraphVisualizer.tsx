@@ -776,6 +776,377 @@ interface ContextMenuState {
   screenY: number;
 }
 
+// Логотип собран из отдельных узлов и рёбер: при наведении каждый затемняется сам по себе (см. globals.css),
+// а по клику узлы перелетают на новые места, образуя другой вид графа.
+type LogoPoint = { x: number; y: number };
+const LOGO_HOME: LogoPoint[] = [
+  { x: 518.4, y: 81.5 },
+  { x: 294.3, y: 206.8 },
+  { x: 725.8, y: 209.9 },
+  { x: 483.3, y: 323.2 },
+  { x: 352.2, y: 422.1 },
+];
+const LOGO_EDGES: [number, number][] = [
+  [0, 1],
+  [0, 2],
+  [0, 3],
+  [1, 3],
+  [1, 4],
+  [3, 4],
+];
+const LOGO_BOUNDS = { x0: 296, x1: 724, y0: 84, y1: 418 };
+const LOGO_MIN_GAP = 125;
+
+function segmentsCross(a: LogoPoint, b: LogoPoint, c: LogoPoint, d: LogoPoint) {
+  const o = (p: LogoPoint, q: LogoPoint, r: LogoPoint) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+  return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0;
+}
+
+function distToSegment(p: LogoPoint, a: LogoPoint, b: LogoPoint) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy)));
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+
+// Случайная раскладка без пересечений рёбер и слипшихся узлов, заметно отличная от текущей.
+function randomLogoLayout(current: LogoPoint[]): LogoPoint[] {
+  for (let attempt = 0; attempt < 4000; attempt++) {
+    const pts = current.map(() => ({
+      x: LOGO_BOUNDS.x0 + Math.random() * (LOGO_BOUNDS.x1 - LOGO_BOUNDS.x0),
+      y: LOGO_BOUNDS.y0 + Math.random() * (LOGO_BOUNDS.y1 - LOGO_BOUNDS.y0),
+    }));
+    let ok = true;
+    for (let i = 0; i < pts.length && ok; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        if (Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y) < LOGO_MIN_GAP) {
+          ok = false;
+          break;
+        }
+      }
+    }
+    for (let e = 0; e < LOGO_EDGES.length && ok; e++) {
+      const [a, b] = LOGO_EDGES[e];
+      for (let i = 0; i < pts.length && ok; i++) {
+        if (i !== a && i !== b && distToSegment(pts[i], pts[a], pts[b]) < 75) ok = false;
+      }
+      for (let f = e + 1; f < LOGO_EDGES.length && ok; f++) {
+        const [c, d] = LOGO_EDGES[f];
+        if (c !== a && c !== b && d !== a && d !== b && segmentsCross(pts[a], pts[b], pts[c], pts[d])) ok = false;
+      }
+    }
+    if (!ok) continue;
+    const moved = pts.reduce((sum, p, i) => sum + Math.hypot(p.x - current[i].x, p.y - current[i].y), 0);
+    if (moved > 450) return pts;
+  }
+  return LOGO_HOME;
+}
+
+// ── Пасхалка: буквы, нарисованные графами ────────────────────────────────
+// Координаты букв — на сетке 2×2 (половинки допустимы); у каждой буквы свои узлы и рёбра.
+type LetterDef = { pts: [number, number][]; edges: [number, number][] };
+const LOGO_LETTERS: Record<string, LetterDef> = {
+  H: {
+    pts: [[0, 0], [0, 1], [0, 2], [2, 0], [2, 1], [2, 2], [1, 1]],
+    edges: [[0, 1], [1, 2], [3, 4], [4, 5], [1, 6], [6, 4]],
+  },
+  E: {
+    pts: [[0, 0], [0, 1], [0, 2], [2, 0], [2, 2], [1, 1]],
+    edges: [[0, 1], [1, 2], [0, 3], [2, 4], [1, 5]],
+  },
+  K: {
+    pts: [[0, 0], [0, 1], [0, 2], [2, 0], [2, 2]],
+    edges: [[0, 1], [1, 2], [1, 3], [1, 4]],
+  },
+  R: {
+    pts: [[0, 0], [0, 1], [0, 2], [2, 0], [2, 1], [2, 2]],
+    edges: [[0, 1], [1, 2], [0, 3], [3, 4], [4, 1], [1, 5]],
+  },
+  X: {
+    pts: [[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]],
+    edges: [[0, 2], [1, 2], [2, 3], [2, 4]],
+  },
+  O: {
+    pts: [[0.5, 0], [1.5, 0], [2, 1], [1.5, 2], [0.5, 2], [0, 1]],
+    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0]],
+  },
+  M: {
+    pts: [[0, 2], [0, 0], [1, 1], [2, 0], [2, 2]],
+    edges: [[0, 1], [1, 2], [2, 3], [3, 4]],
+  },
+  Z: {
+    pts: [[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]],
+    edges: [[0, 1], [1, 2], [2, 3], [3, 4]],
+  },
+  A: {
+    pts: [[1, 0], [0.4, 1.2], [1.6, 1.2], [0, 2], [2, 2]],
+    edges: [[0, 1], [1, 3], [0, 2], [2, 4], [1, 2]],
+  },
+};
+const LOGO_EGG_WORDS = ['HEKR', 'XROMZA', 'XRMZ'];
+/** Шанс (0…1), что клик по логотипу запустит буквенную пасхалку. 0 — выключить, 1 — каждый раз. */
+const LOGO_EGG_CHANCE = 0.01;
+
+// Фиксированный «пул» узлов и рёбер: лишние схлопываются в точку и становятся невидимыми,
+// поэтому форма плавно перетекает между графами с разным числом элементов.
+type LogoShape = {
+  n: { x: number; y: number; o: number }[];
+  e: { x1: number; y1: number; x2: number; y2: number; o: number }[];
+};
+const POOL_N = Math.max(5, ...Object.values(LOGO_LETTERS).map(l => l.pts.length));
+const POOL_E = Math.max(LOGO_EDGES.length, ...Object.values(LOGO_LETTERS).map(l => l.edges.length));
+
+function makeShape(pts: LogoPoint[], edges: [number, number][]): LogoShape {
+  const anchor = pts[0];
+  return {
+    n: Array.from({ length: POOL_N }, (_, i) => (i < pts.length ? { ...pts[i], o: 1 } : { ...anchor, o: 0 })),
+    e: Array.from({ length: POOL_E }, (_, i) => {
+      if (i >= edges.length) return { x1: anchor.x, y1: anchor.y, x2: anchor.x, y2: anchor.y, o: 0 };
+      const [a, b] = edges[i];
+      return { x1: pts[a].x, y1: pts[a].y, x2: pts[b].x, y2: pts[b].y, o: 1 };
+    }),
+  };
+}
+
+function letterShape(ch: string): LogoShape {
+  const def = LOGO_LETTERS[ch];
+  const pts = def.pts.map(([gx, gy]) => ({ x: 330 + gx * 180, y: 84 + gy * 167 }));
+  return makeShape(pts, def.edges);
+}
+
+function lerpShape(a: LogoShape, b: LogoShape, k: number): LogoShape {
+  const l = (p: number, q: number) => p + (q - p) * k;
+  const o = (p: number, q: number) => Math.min(1, Math.max(0, l(p, q)));
+  return {
+    n: a.n.map((p, i) => ({ x: l(p.x, b.n[i].x), y: l(p.y, b.n[i].y), o: o(p.o, b.n[i].o) })),
+    e: a.e.map((p, i) => ({
+      x1: l(p.x1, b.e[i].x1),
+      y1: l(p.y1, b.e[i].y1),
+      x2: l(p.x2, b.e[i].x2),
+      y2: l(p.y2, b.e[i].y2),
+      o: o(p.o, b.e[i].o),
+    })),
+  };
+}
+
+const LOGO_HOME_SHAPE = makeShape(LOGO_HOME, LOGO_EDGES);
+
+function LogoMark({
+  className = '',
+  interactive = false,
+}: {
+  className?: string;
+  interactive?: boolean;
+}) {
+  const [shape, setShape] = useState<LogoShape>(LOGO_HOME_SHAPE);
+  const shapeRef = useRef<LogoShape>(LOGO_HOME_SHAPE);
+  const rafRef = useRef<number | null>(null);
+  // Активная пасхалка: слово и номер следующей буквы. null — обычный режим.
+  const eggRef = useRef<{ word: string; next: number } | null>(null);
+  // Последнее показанное слово: следующая пасхалка выбирается из остальных.
+  const lastWordRef = useRef<string | null>(null);
+
+  useEffect(() => () => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  const nextTarget = (): LogoShape => {
+    if (!eggRef.current && Math.random() < LOGO_EGG_CHANCE) {
+      const pool = LOGO_EGG_WORDS.filter(w => w !== lastWordRef.current);
+      const word = pool[Math.floor(Math.random() * pool.length)];
+      lastWordRef.current = word;
+      eggRef.current = { word, next: 0 };
+    }
+    const egg = eggRef.current;
+    if (egg) {
+      const ch = egg.word[egg.next++];
+      if (egg.next >= egg.word.length) eggRef.current = null; // буквы кончились — дальше как обычно
+      return letterShape(ch);
+    }
+    const current = shapeRef.current.n.slice(0, LOGO_HOME.length).map(({ x, y }) => ({ x, y }));
+    return makeShape(randomLogoLayout(current), LOGO_EDGES);
+  };
+
+  const shuffle = () => {
+    const from = shapeRef.current;
+    const to = nextTarget();
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    const set = (next: LogoShape) => {
+      shapeRef.current = next;
+      setShape(next);
+    };
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      set(to);
+      return;
+    }
+    const start = performance.now();
+    const DURATION = 700;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / DURATION);
+      // easeOutBack: небольшой «перелёт» делает движение живым.
+      const k = 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
+      set(lerpShape(from, to, k));
+      rafRef.current = t < 1 ? requestAnimationFrame(tick) : null;
+    };
+    rafRef.current = requestAnimationFrame(tick);
+  };
+
+  const svg = (
+    <svg
+      viewBox="250 38 519 426"
+      aria-hidden="true"
+      focusable="false"
+      overflow="visible"
+      className={`logo-mark ${interactive ? 'is-interactive' : ''} ${className}`}
+    >
+      {shape.e.map((e, i) => (
+        <g key={`e${i}`} className="logo-edge-g">
+          <line
+            className="logo-part logo-edge"
+            x1={e.x1}
+            y1={e.y1}
+            x2={e.x2}
+            y2={e.y2}
+            strokeWidth={16.1 * e.o}
+          />
+          {interactive && e.o > 0.5 && (
+            // Невидимая зона захвата шире самого ребра.
+            <line
+              x1={e.x1}
+              y1={e.y1}
+              x2={e.x2}
+              y2={e.y2}
+              stroke="transparent"
+              strokeWidth={56}
+              strokeLinecap="round"
+              pointerEvents="stroke"
+            />
+          )}
+        </g>
+      ))}
+      {shape.n.map((n, i) => (
+        <circle key={`n${i}`} className="logo-part logo-node" cx={n.x} cy={n.y} r={42.1 * n.o} />
+      ))}
+    </svg>
+  );
+
+  if (!interactive) return svg;
+  return (
+    <button
+      type="button"
+      onClick={shuffle}
+      aria-label="Переставить узлы логотипа"
+      className="block rounded-panel cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-accent"
+    >
+      {svg}
+    </button>
+  );
+}
+
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? '0.1.0';
+
+function GitHubMark({ className = '' }: { className?: string }) {
+  // Маска вместо <img>: логотип берёт цвет текста и читается в обеих темах.
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-block bg-current ${className}`}
+      style={{
+        WebkitMask: 'url(/github-mark.svg) center / contain no-repeat',
+        mask: 'url(/github-mark.svg) center / contain no-repeat',
+      }}
+    />
+  );
+}
+
+function TelegramMark({ className = '' }: { className?: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src="/telegram-logo.svg" alt="" aria-hidden="true" draggable={false} className={className} />;
+}
+
+function AboutDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <AnimatePresence>
+      {open && <AboutDialogBody key="about" onClose={onClose} />}
+    </AnimatePresence>
+  );
+}
+
+function AboutDialogBody({ onClose }: { onClose: () => void }) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const links = [
+    { href: 'https://github.com/xromza', label: 'GitHub', handle: 'xromza', Icon: GitHubMark },
+    { href: 'https://xromza.t.me/', label: 'Telegram', handle: 'xromza', Icon: TelegramMark },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1, transition: { duration: 0.2 } }}
+      exit={{ opacity: 0, transition: { duration: 0.15 } }}
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40"
+      onPointerDown={e => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="about-title"
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1, transition: { duration: 0.22, ease: APPLE_EASE } }}
+        exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.12 } }}
+        className="relative w-full max-w-[320px] rounded-panel bg-surface shadow-float px-5 pt-8 pb-5 flex flex-col items-center"
+      >
+        <button
+          ref={closeRef}
+          type="button"
+          onClick={onClose}
+          aria-label="Закрыть"
+          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-fill hover:bg-fill-hover active:scale-95 flex items-center justify-center text-secondary hover:text-label transition-all outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        <LogoMark interactive className="h-16 w-auto" />
+        <h2 id="about-title" className="mt-4 flex items-baseline gap-1.5 text-[20px] font-semibold tracking-tight text-label">
+          Graph Visualizer
+          <span className="text-[11px] font-normal tracking-normal text-tertiary font-mono">v{APP_VERSION}</span>
+        </h2>
+        <p className="mt-0.5 text-[13px] text-secondary">by xromza</p>
+
+        <ul className="mt-6 w-full rounded-control bg-fill overflow-hidden divide-y divide-separator">
+          {links.map(({ href, label, handle, Icon }) => (
+            <li key={label}>
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-3 min-h-[44px] hover:bg-fill-hover transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+              >
+                <Icon className="w-6 h-6 shrink-0 text-label" />
+                <span className="text-[15px] text-label">{label}</span>
+                <span className="ml-auto text-[13px] text-secondary">{handle}</span>
+                <ChevronRight className="w-4 h-4 shrink-0 text-tertiary" aria-hidden="true" />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function GraphVisualizer({
   onAlgorithmRun,
   onStop,
@@ -795,6 +1166,7 @@ export default function GraphVisualizer({
 
   const [graphVersion, setGraphVersion] = useState(0);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [panelSide, setPanelSide] = useState<PanelSide>('right');
 
   const [isDraggingPanel, setIsDraggingPanel] = useState(false);
@@ -803,9 +1175,9 @@ export default function GraphVisualizer({
 
   // Компактная раскладка (телефон): панель — нижний лист, инструменты — только значки.
   const [isCompact, setIsCompact] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(
-    typeof window !== 'undefined' ? window.innerWidth : 1200
-  );
+  // Стартовое значение одинаково на сервере и клиенте (иначе ошибка гидратации);
+  // реальная ширина подставляется сразу после монтирования.
+  const [windowWidth, setWindowWidth] = useState(1200);
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
@@ -850,6 +1222,7 @@ export default function GraphVisualizer({
   }, []);
 
   useEffect(() => {
+    setWindowWidth(window.innerWidth);
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
       rendererRef.current?.resize();
@@ -1938,44 +2311,43 @@ export default function GraphVisualizer({
         >
           <div className="w-9 h-[5px] rounded-full bg-tertiary/50 mx-auto group-hover:bg-tertiary transition-colors" />
 
-          <div className="flex items-center gap-2 mt-2.5 select-none">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo-mark.svg"
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-              className="h-[22px] w-auto shrink-0 pointer-events-none"
-            />
-            <span className="text-[17px] font-semibold text-label tracking-tight leading-none">Graph Visualizer</span>
-          </div>
-
-          <div className="flex items-center justify-between mt-3">
-            <span className="text-[15px] font-semibold text-label tracking-tight">Параметры</span>
-
-            <div
+          <div className="flex items-center justify-between mt-2.5">
+            <button
+              type="button"
               onPointerDown={e => e.stopPropagation()}
-              className="flex items-center gap-2.5 cursor-default"
+              onClick={() => setIsAboutOpen(true)}
+              aria-label="О приложении"
+              aria-haspopup="dialog"
+              className="flex items-center gap-2 min-w-0 -ml-1 pl-1 pr-2 py-0.5 rounded-control text-left cursor-default hover:cursor-pointer hover:bg-fill/60 active:bg-fill transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
-              <div className="flex items-center gap-2">
-                <span className="text-[12px] text-secondary font-medium">Направленный</span>
-                <IOSSwitch checked={directed} onChange={setDirected} disabled={isPlaying} />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-mark.svg"
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                className="h-[22px] w-auto shrink-0 pointer-events-none"
+              />
+              <span className="flex flex-col min-w-0">
+                <span className="text-[17px] font-semibold text-label tracking-tight leading-none truncate">Graph Visualizer</span>
+                <span className="mt-[3px] text-[10px] leading-none text-tertiary tracking-wide">by xromza</span>
+              </span>
+            </button>
 
-              <button
-                onClick={() => setIsPanelOpen(false)}
-                className="w-9 h-9 md:w-7 md:h-7 rounded-full bg-fill active:scale-95 flex items-center justify-center text-secondary hover:text-label transition-all"
-                aria-label="Свернуть панель"
-              >
-                {isCompact ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : panelSide === 'right' ? (
-                  <ChevronRight className="w-4 h-4" />
-                ) : (
-                  <ChevronLeft className="w-4 h-4" />
-                )}
-              </button>
-            </div>
+            <button
+              onPointerDown={e => e.stopPropagation()}
+              onClick={() => setIsPanelOpen(false)}
+              className="w-9 h-9 md:w-7 md:h-7 shrink-0 rounded-full bg-fill active:scale-95 flex items-center justify-center text-secondary hover:text-label transition-all cursor-default"
+              aria-label="Свернуть панель"
+            >
+              {isCompact ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : panelSide === 'right' ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <ChevronLeft className="w-4 h-4" />
+              )}
+            </button>
           </div>
         </div>
 
@@ -1983,6 +2355,13 @@ export default function GraphVisualizer({
         <div className="flex flex-col flex-1 min-h-0 max-md:overflow-y-auto md:contents">
         {/* Контент: плоские секции с разделителями */}
         <div className="md:flex-1 md:overflow-y-auto px-4 py-3.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex items-center justify-between min-h-9">
+            <span className="text-[15px] text-label">Направленный граф</span>
+            <IOSSwitch checked={directed} onChange={setDirected} disabled={isPlaying} />
+          </div>
+
+          <Hairline className="my-3.5" />
+
           <SectionLabel className="mb-1.5">Алгоритм</SectionLabel>
           <CustomSelect
             options={algorithms.map(algo => ({ value: algo.id, label: algo.name }))}
@@ -2525,6 +2904,7 @@ export default function GraphVisualizer({
       </AnimatePresence>
 
       <AlertDialog state={dialog} onClose={closeDialog} />
+      <AboutDialog open={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
 
       {/* Контекстное меню */}
       <AnimatePresence>
