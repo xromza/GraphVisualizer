@@ -11,6 +11,7 @@ import {
 import { createPortal } from 'react-dom';
 import {
   motion,
+  animate as animateValue,
   AnimatePresence,
   useDragControls,
   useMotionValue,
@@ -1172,6 +1173,7 @@ export default function GraphVisualizer({
   const [isDraggingPanel, setIsDraggingPanel] = useState(false);
   const [dragHoverSide, setDragHoverSide] = useState<PanelSide>('right');
   const dragControls = useDragControls();
+  const panelX = useMotionValue(0);
 
   // Компактная раскладка (телефон): панель — нижний лист, инструменты — только значки.
   const [isCompact, setIsCompact] = useState(false);
@@ -2281,7 +2283,11 @@ export default function GraphVisualizer({
             return;
           }
           const isLeft = info.point.x < windowWidth / 2;
-          setPanelSide(isLeft ? 'left' : 'right');
+          const nextSide: PanelSide = isLeft ? 'left' : 'right';
+          setPanelSide(nextSide);
+          // Если сторона не изменилась, animate-проп не перезапустится — возвращаем панель вручную
+          const nextX = nextSide === 'right' ? Math.max(windowWidth - PANEL_SPACE, 20) : 20;
+          animateValue(panelX, nextX, SPRING_SMOOTH);
         }}
         animate={
           isCompact
@@ -2294,7 +2300,7 @@ export default function GraphVisualizer({
           opacity: { duration: isPanelOpen ? 0.28 : 0.16, ease: APPLE_EASE },
         }}
         style={{
-          ...(isCompact ? { height: 'min(78dvh, 640px)' } : { width: PANEL_WIDTH, left: 0 }),
+          ...(isCompact ? { height: 'min(78dvh, 640px)' } : { width: PANEL_WIDTH, left: 0, x: panelX }),
           pointerEvents: isPanelOpen ? 'auto' : 'none',
         }}
         className={`absolute z-20 flex flex-col material overflow-hidden ${
