@@ -18,6 +18,9 @@ import ru.xromza.graphvisual.model.Edge;
 import ru.xromza.graphvisual.model.Graph;
 import ru.xromza.graphvisual.types.AlgorithmStatus;
 
+/**
+ * Реализация: алгоритм Дейкстры. Находит путь с минимальной суммой весов рёбер; веса должны быть неотрицательными.
+ */
 @Component
 public class DijkstraAlgorithm implements GraphAlgorithm {
 

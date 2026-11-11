@@ -20,6 +20,9 @@ import ru.xromza.graphvisual.model.Graph;
 import ru.xromza.graphvisual.model.Node;
 import ru.xromza.graphvisual.types.AlgorithmStatus;
 
+/**
+ * Реализация: A*. Эвристика — евклидово расстояние между узлами на холсте, нормированное на 200 px (средняя длина ребра).
+ */
 @Component
 public class AStarAlgorithm implements GraphAlgorithm {
 

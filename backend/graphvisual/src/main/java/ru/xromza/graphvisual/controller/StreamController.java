@@ -26,6 +26,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+/**
+ * REST-контроллер алгоритмов: отдаёт список алгоритмов и запускает выбранный алгоритм
+ * со стримингом шагов через Server-Sent Events.
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/algorithm")
@@ -36,11 +40,26 @@ public class StreamController {
 
     private final AlgorithmRegistry algorithmRegistry;
 
+    /**
+     * {@code GET /api/v1/algorithm/all}
+     *
+     * @return список доступных алгоритмов
+     */
     @GetMapping(path = "all")
     public Mono<List<AlgorithmListEntryDto>> getAlgorithms() {
         return Mono.just(algorithmRegistry.getAvailableAlgorithms());
     }
 
+    /**
+     * {@code POST /api/v1/algorithm/run}
+     *
+     * <p>Запускает алгоритм и возвращает поток событий {@code newStep}. Пока алгоритм не завершился,
+     * каждые 3 секунды отправляется комментарий {@code ping}, чтобы соединение не закрывалось прокси.
+     *
+     * @param request     граф и параметры запуска
+     * @param httpRequest исходный HTTP-запрос
+     * @return поток шагов алгоритма в формате SSE
+     */
     @PostMapping(path="run", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<AlgorithmStepDto>> runAlgorithmSse(
             @RequestBody AlgorithmRunRequest request,

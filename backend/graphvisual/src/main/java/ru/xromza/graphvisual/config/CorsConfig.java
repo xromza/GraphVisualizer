@@ -9,6 +9,12 @@ import org.springframework.web.reactive.config.WebFluxConfigurer;
 @EnableWebFlux
 public class CorsConfig implements WebFluxConfigurer {
 
+    /**
+     * Разрешает любые источники, заголовки и методы {@code GET, POST, PUT, DELETE, OPTIONS},
+     * передачу учётных данных и кэширование preflight-ответа на час.
+     *
+     * @param registry реестр CORS-правил WebFlux
+     */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")

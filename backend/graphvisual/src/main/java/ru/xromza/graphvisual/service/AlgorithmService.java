@@ -18,6 +18,9 @@ import ru.xromza.graphvisual.dto.AlgorithmStepDto;
 import ru.xromza.graphvisual.model.Graph;
 import ru.xromza.graphvisual.types.AlgorithmStatus;
 
+/**
+ * Сервис запуска алгоритмов: собирает маршрут из участков и отправляет шаги в приёмник клиента.
+ */
 @Service
 @RequiredArgsConstructor
 public class AlgorithmService {

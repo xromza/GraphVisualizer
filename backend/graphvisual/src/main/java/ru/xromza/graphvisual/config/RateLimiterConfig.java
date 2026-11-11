@@ -28,6 +28,13 @@ public class RateLimiterConfig {
         return RedisClient.create(redisURI);
     }
 
+    /**
+     * Создаёт асинхронный менеджер бакетов на Redis (CAS-режим). Неиспользуемые бакеты истекают,
+     * когда успевают пополниться до максимума (не дольше минуты).
+     *
+     * @param redisClient клиент Redis
+     * @return менеджер распределённых бакетов
+     */
     @Bean AsyncProxyManager<byte[]> asyncProxyManager(RedisClient redisClient) {
         return Bucket4jLettuce
                 .casBasedBuilder(redisClient)

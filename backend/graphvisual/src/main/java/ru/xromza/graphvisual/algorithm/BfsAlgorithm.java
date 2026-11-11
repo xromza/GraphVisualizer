@@ -18,6 +18,9 @@ import ru.xromza.graphvisual.model.Edge;
 import ru.xromza.graphvisual.model.Graph;
 import ru.xromza.graphvisual.types.AlgorithmStatus;
 
+/**
+ * Реализация: поиск в ширину (BFS). Расстояния суммируют веса рёбер вдоль найденного пути; алгоритм ищет путь с минимальным числом рёбер.
+ */
 @Component
 public class BfsAlgorithm implements GraphAlgorithm {
 

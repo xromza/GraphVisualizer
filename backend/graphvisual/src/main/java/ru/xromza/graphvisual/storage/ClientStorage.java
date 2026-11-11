@@ -11,10 +11,21 @@ import reactor.core.publisher.Sinks;
 import ru.xromza.graphvisual.dto.AlgorithmStepDto;
 
 
+/**
+ * Хранилище активных SSE-подписчиков: для каждого клиента держит набор приёмников ({@link Sinks.Many}),
+ * в которые алгоритм отправляет шаги.
+ */
 @Component
 public class ClientStorage {
     private final ConcurrentMap<UUID, Set<Sinks.Many<AlgorithmStepDto>>> userSinks = new ConcurrentHashMap<>();
 
+    /**
+     * Регистрирует нового клиента и создаёт для него буферизованный multicast-приёмник (до 1024 шагов).
+     *
+     * @param clientId идентификатор клиента
+     * @return приёмник, в который нужно отправлять шаги этого клиента
+     * @throws IllegalArgumentException если {@code clientId} равен {@code null}
+     */
     public Sinks.Many<AlgorithmStepDto> addClient(UUID clientId) {
         if (clientId == null) {
             throw new IllegalArgumentException("clientId cannot be null");
@@ -26,6 +37,12 @@ public class ClientStorage {
         return sink;
     }
 
+    /**
+     * Удаляет приёмник клиента; если у клиента не осталось приёмников, удаляет и самого клиента.
+     *
+     * @param clientId идентификатор клиента
+     * @param sink     приёмник, который нужно удалить
+     */
     public void removeClient(UUID clientId, Sinks.Many<AlgorithmStepDto> sink) {
         Set<Sinks.Many<AlgorithmStepDto>> sinks = userSinks.get(clientId);
 

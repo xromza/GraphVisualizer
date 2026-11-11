@@ -14,6 +14,13 @@ import ru.xromza.graphvisual.dto.ErrorResponse;
 @RestControllerAdvice
 public class GlobalErrorHandler {
 
+    /**
+     * Преобразует {@link IllegalStateException} (например, неизвестный алгоритм) в ответ {@code 400 Bad Request}.
+     *
+     * @param e       исключение
+     * @param request запрос, при обработке которого оно возникло
+     * @return ответ с описанием ошибки
+     */
     @ExceptionHandler(IllegalStateException.class)
     public Mono<ResponseEntity<ErrorResponse>> handleExceptions(IllegalStateException e, ServerHttpRequest request) {
         return Mono.just(ResponseEntity

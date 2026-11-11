@@ -19,6 +19,13 @@ import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.distributed.proxy.AsyncProxyManager;
 import reactor.core.publisher.Mono;
 
+/**
+ * Фильтр ограничения частоты запросов к {@code /algorithm/run}.
+ *
+ * <p>Для каждого клиента (по IP) действует token bucket: 50 запросов в минуту, состояние бакетов
+ * хранится в Redis через Bucket4j, поэтому лимит общий для всех экземпляров приложения.
+ * При превышении лимита возвращается {@code 429 Too Many Requests}. Остальные пути не ограничиваются.
+ */
 @Component
 @Order(-1)
 public class RateLimitingFilter implements WebFilter {
@@ -37,6 +44,13 @@ public class RateLimitingFilter implements WebFilter {
                 .build();
     }
 
+    /**
+     * Пропускает запрос дальше по цепочке или отклоняет его, если у клиента закончились токены.
+     *
+     * @param exchange текущий обмен запрос/ответ
+     * @param chain    остальная цепочка фильтров
+     * @return завершение обработки запроса
+     */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String path = exchange.getRequest().getPath().value();
@@ -59,6 +73,13 @@ public class RateLimitingFilter implements WebFilter {
                 });
     }
 
+    /**
+     * Определяет IP клиента: первый адрес из {@code X-Forwarded-For} (приложение работает за reverse proxy),
+     * иначе адрес сокета, иначе {@code "anonymous"}.
+     *
+     * @param request входящий запрос
+     * @return строковый идентификатор клиента для бакета
+     */
     private String resolveTrustedRemoteIp(ServerHttpRequest request) {
         String forwardedFor = request.getHeaders().getFirst("X-Forwarded-For");
         if (StringUtils.hasText(forwardedFor)) {

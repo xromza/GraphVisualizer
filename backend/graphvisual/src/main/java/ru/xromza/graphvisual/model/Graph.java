@@ -6,10 +6,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Граф со списком смежности.
+ *
+ * @param nodes         узлы по идентификатору
+ * @param adjacencyList  исходящие рёбра по идентификатору узла-источника
+ */
 public record Graph(
         Map<String, Node> nodes,
         Map<String, List<Edge>> adjacencyList) {
 
+    /**
+     * Строит граф из «сырых» данных запроса.
+     *
+     * @param rawNodes   узлы в формате {@code [id, label, x, y]}
+     * @param rawEdges   рёбра в формате {@code [id, sourceId, targetId, weight]}
+     * @param isDirected {@code true} для направленного графа
+     * @return построенный граф
+     */
     public static Graph of(List<List<Object>> rawNodes, List<List<Object>> rawEdges, boolean isDirected) {
         Map<String, Node> nodes = rawNodes.stream()
                 .map(raw -> new Node(
@@ -32,6 +46,17 @@ public record Graph(
         return Graph.of(nodes, flatEdges, isDirected);
     }
 
+    /**
+     * Строит список смежности по плоскому списку рёбер.
+     *
+     * <p>Для ненаправленного графа к каждому ребру (кроме петель) добавляется обратное ребро
+     * с идентификатором {@code <id приёмника>-rev}.
+     *
+     * @param nodes     узлы по идентификатору
+     * @param flatEdges рёбра графа
+     * @param isDirected {@code true} для направленного графа
+     * @return построенный граф
+     */
     public static Graph of(Map<String, Node> nodes, List<Edge> flatEdges, boolean isDirected) {
         Map<String, List<Edge>> adjacency = flatEdges.stream()
                 .collect(Collectors.groupingBy(

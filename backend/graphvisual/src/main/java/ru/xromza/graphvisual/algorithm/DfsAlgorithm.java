@@ -18,6 +18,9 @@ import ru.xromza.graphvisual.model.Edge;
 import ru.xromza.graphvisual.model.Graph;
 import ru.xromza.graphvisual.types.AlgorithmStatus;
 
+/**
+ * Реализация: поиск в глубину (DFS). Соседи обходятся в порядке их следования в списке смежности; найденный путь не обязательно кратчайший.
+ */
 @Component
 public class DfsAlgorithm implements GraphAlgorithm {
 

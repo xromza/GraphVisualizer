@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import ru.xromza.graphvisual.dto.AlgorithmListEntryDto;
 
+/**
+ * Реестр доступных алгоритмов: собирает все бины {@link GraphAlgorithm} и выдаёт их по идентификатору.
+ */
 @Service
 @Slf4j 
 public class AlgorithmRegistry {
@@ -26,6 +29,13 @@ public class AlgorithmRegistry {
         return algorithmMap.values().stream().map(a -> new AlgorithmListEntryDto(a.getId(), a.getName())).toList();
     }
 
+    /**
+     * Возвращает алгоритм по идентификатору.
+     *
+     * @param algorithmId идентификатор алгоритма
+     * @return найденный алгоритм
+     * @throws IllegalStateException если алгоритма с таким идентификатором нет
+     */
     public GraphAlgorithm getAlgorithm(String algorithmId) {
         return Optional.ofNullable(algorithmMap.get(algorithmId))
                 .orElseThrow(() -> new IllegalStateException("Такого алгоритма нет"));

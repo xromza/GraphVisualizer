@@ -10,6 +10,12 @@ import reactor.netty.resources.LoopResources;
 
 @Component
 public class NettyCustomizerConfig {
+    /**
+     * Задаёт пул потоков {@code scale-netty} (1 селектор, 4 рабочих потока, демоны) и включает TCP keep-alive,
+     * чтобы долгоживущие SSE-соединения не обрывались.
+     *
+     * @return кастомайзер фабрики Netty-сервера
+     */
     @Bean
     public WebServerFactoryCustomizer<NettyReactiveWebServerFactory> customizer() {
         return factory -> factory.addServerCustomizers(httpServer -> httpServer
