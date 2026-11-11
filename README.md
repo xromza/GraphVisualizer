@@ -24,7 +24,7 @@
 [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-000?logo=opentelemetry&logoColor=fff)](https://opentelemetry.io/)
 [![Playwright](https://custom-icon-badges.demolab.com/badge/Playwright-2EAD33?logo=playwright&logoColor=fff)](https://playwright.dev/)
 [![GPLv3](https://img.shields.io/badge/GPLv3-FFFFFF)](LICENSE)
-[![Instruction coverage](https://img.shields.io/badge/Instruction%20coverage-97%25-brightgreen)](#тестирование)
+[![Instruction coverage](https://img.shields.io/badge/Instruction%20coverage-100%25-brightgreen)](#тестирование)
 [![Branch coverage](https://img.shields.io/badge/Branch%20coverage-100%25-brightgreen)](#тестирование)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](#участие-в-разработке)
 
@@ -71,7 +71,7 @@
 - **Расширяемость** — новый алгоритм это одна реализация `GraphAlgorithm`, регистрируемая в `AlgorithmRegistry`.
 - **Защита от злоупотреблений** — rate limiting на Bucket4j с хранением состояния в Redis.
 - **Готовая observability-обвязка** — Prometheus, Grafana, Loki, OpenTelemetry.
-- **Высокое покрытие тестами** — 97% инструкций и 100% ветвлений (JaCoCo).
+- **Высокое покрытие тестами** — 100% инструкций и 100% ветвлений (по отчёту JaCoCo).
 
 ## Технологический стек
 
