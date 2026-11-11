@@ -3,15 +3,20 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml" />
     <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
 
+    <springProperty scope="context" name="GraphVisualizer" source="ru.xromza.graphvisual"
+        defaultValue="java-app" />
+
     <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
         <http>
             <url>http://loki:3100/loki/api/v1/push</url>
         </http>
         <format>
             <label>
-                <pattern>app=graph-visual,host=${HOSTNAME},level=%level</pattern>
+                <pattern>app=${appName},host=${HOSTNAME},level=%level</pattern>
             </label>
-            <message class="com.github.loki4j.logback.JsonLayout" />
+            <message class="com.github.loki4j.logback.JsonLayout">
+                <pattern>l=%level c=%logger{36} t=%thread | %msg %ex</pattern>
+            </message>
         </format>
     </appender>
 
