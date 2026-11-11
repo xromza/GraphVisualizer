@@ -1938,7 +1938,19 @@ export default function GraphVisualizer({
         >
           <div className="w-9 h-[5px] rounded-full bg-tertiary/50 mx-auto group-hover:bg-tertiary transition-colors" />
 
-          <div className="flex items-center justify-between mt-2.5">
+          <div className="flex items-center gap-2 mt-2.5 select-none">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-mark.svg"
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className="h-[22px] w-auto shrink-0 pointer-events-none"
+            />
+            <span className="text-[17px] font-semibold text-label tracking-tight leading-none">Graph Visualizer</span>
+          </div>
+
+          <div className="flex items-center justify-between mt-3">
             <span className="text-[15px] font-semibold text-label tracking-tight">Параметры</span>
 
             <div
