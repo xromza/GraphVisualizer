@@ -10,21 +10,24 @@
 
 Интерактивный визуализатор алгоритмов на графах с пошаговой анимацией в реальном времени через Server-Sent Events.
 
-[![Java](https://img.shields.io/badge/Java-25-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/)
-[![Redis](https://img.shields.io/badge/Redis-rate_limiter-DC382D?logo=redis&logoColor=white)](https://redis.io/)
-[![Prometheus](https://img.shields.io/badge/Prometheus-metrics-E6522C?logo=prometheus&logoColor=white)](https://prometheus.io/)
-[![Grafana](https://img.shields.io/badge/Grafana-dashboards-F46800?logo=grafana&logoColor=white)](https://grafana.com/)
-[![Tests](https://img.shields.io/badge/instruction_coverage-97%25-brightgreen?logo=jacoco)](#тестирование)
-[![Branch coverage](https://img.shields.io/badge/branch_coverage-100%25-brightgreen?logo=jacoco)](#тестирование)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#участие-в-разработке)
-[![Last commit](https://img.shields.io/github/last-commit/xromza/GraphVisualizer)](https://github.com/xromza/GraphVisualizer/commits/main)
-[![Stars](https://img.shields.io/github/stars/xromza/GraphVisualizer?style=flat)](https://github.com/xromza/GraphVisualizer/stargazers)
+[![Java](https://img.shields.io/badge/Java-%23ED8B00.svg?logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-6DB33F?logo=springboot&logoColor=fff)](https://spring.io/projects/spring-boot)
+[![Next.js](https://img.shields.io/badge/Next.js-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-%2320232a.svg?logo=react&logoColor=%2361DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-%2338B2AC.svg?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=fff)](https://docs.docker.com/compose/)
+[![nginx](https://img.shields.io/badge/nginx-009639?logo=nginx&logoColor=fff)](https://nginx.org/)
+[![Redis](https://img.shields.io/badge/Redis-%23DD0031.svg?logo=redis&logoColor=white)](https://redis.io/)
+[![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?logo=prometheus&logoColor=white)](https://prometheus.io/)
+[![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white)](https://grafana.com/)
+[![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-000?logo=opentelemetry&logoColor=fff)](https://opentelemetry.io/)
+[![Playwright](https://custom-icon-badges.demolab.com/badge/Playwright-2EAD33?logo=playwright&logoColor=fff)](https://playwright.dev/)
+[![GPLv3](https://img.shields.io/badge/GPLv3-FFFFFF)](LICENSE)
+[![Instruction coverage](https://img.shields.io/badge/Instruction%20coverage-97%25-brightgreen)](#тестирование)
+[![Branch coverage](https://img.shields.io/badge/Branch%20coverage-100%25-brightgreen)](#тестирование)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](#участие-в-разработке)
+
 
 </div>
 
@@ -57,6 +60,7 @@
 - [Структура проекта](#структура-проекта)
 - [Документация](#документация)
 - [Участие в разработке](#участие-в-разработке)
+- [Лицензия](#лицензия)
 
 ## Возможности
 
@@ -263,6 +267,10 @@ Pull request'ы и идеи приветствуются.
 1. Реализуйте интерфейс `GraphAlgorithm` в пакете `algorithm/`.
 2. Зарегистрируйте реализацию в `AlgorithmRegistry`.
 3. Добавьте тест по образцу `AbstractGraphAlgorithmTest`.
+
+## Лицензия
+
+Проект распространяется под лицензией [GNU GPLv3](LICENSE).
 
 ---
 
