@@ -24,8 +24,9 @@
 [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-000?logo=opentelemetry&logoColor=fff)](https://opentelemetry.io/)
 [![Playwright](https://custom-icon-badges.demolab.com/badge/Playwright-2EAD33?logo=playwright&logoColor=fff)](https://playwright.dev/)
 [![GPLv3](https://img.shields.io/badge/GPLv3-FFFFFF)](LICENSE)
-[![Instruction coverage](https://img.shields.io/badge/Instruction%20coverage-100%25-brightgreen)](#тестирование)
-[![Branch coverage](https://img.shields.io/badge/Branch%20coverage-100%25-brightgreen)](#тестирование)
+[![Backend coverage](https://img.shields.io/badge/Backend%20coverage-100%25-brightgreen)](#тестирование)
+[![Frontend coverage](https://img.shields.io/badge/Frontend%20coverage-96%25-brightgreen)](#тестирование)
+[![E2E](https://img.shields.io/badge/E2E-21%20tests-2EAD33)](#e2e-тесты-playwright)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](#участие-в-разработке)
 
 
@@ -71,7 +72,7 @@
 - **Расширяемость** — новый алгоритм это одна реализация `GraphAlgorithm`, регистрируемая в `AlgorithmRegistry`.
 - **Защита от злоупотреблений** — rate limiting на Bucket4j с хранением состояния в Redis.
 - **Готовая observability-обвязка** — Prometheus, Grafana, Loki, OpenTelemetry.
-- **Высокое покрытие тестами** — 100% инструкций и 100% ветвлений (по отчёту JaCoCo).
+- **Высокое покрытие тестами** — backend: 100% инструкций и ветвлений (JaCoCo), frontend: 96% строк (Vitest + V8), плюс 21 e2e-тест в Playwright.
 
 ## Технологический стек
 
@@ -82,7 +83,7 @@
 | **Frontend** | Next.js 16 (App Router), React 19, TypeScript 5, Canvas API, Tailwind CSS, Framer Motion, Lucide |
 | **Observability** | Spring Actuator, Micrometer + Prometheus, OpenTelemetry, Loki (logback appender), Grafana, cAdvisor, node-exporter |
 | **Инфраструктура** | Docker, Docker Compose, Nginx (reverse proxy, HTTPS-конфиг в `nginx.https.conf`) |
-| **Качество** | JUnit, WebFlux Test, JaCoCo, ESLint, Playwright |
+| **Качество** | JUnit, WebFlux Test, JaCoCo, Vitest (V8 coverage), Playwright, ESLint |
 
 ## Архитектура
 
@@ -209,12 +210,61 @@ data: {"stepNumber":2,"activeNodeId":"node-2","visitedNodes":["node-1","node-2"]
 
 ## Тестирование
 
-```bash
-# Backend: тесты + отчёт JaCoCo (backend/graphvisual/target/site/jacoco)
-cd backend/graphvisual
-./mvnw verify
+| Уровень | Инструмент | Что проверяется | Команда |
+|---|---|---|---|
+| Backend | JUnit, WebFlux Test, JaCoCo | алгоритмы, сервис, контроллер, rate limiting, хранилище клиентов | `./mvnw verify` |
+| Frontend (unit) | Vitest, V8 coverage | `lib/*` и `app/api/*`: построение графа, раскладки, force-layout, рендерер Canvas, API-клиент | `npm run test:coverage` |
+| Frontend (e2e) | Playwright (Chromium) | пользовательские сценарии в реальном браузере | `npm run test:e2e` |
 
-# Frontend: линтинг
+### Backend
+
+```bash
+cd backend/graphvisual
+./mvnw verify    # тесты + отчёт JaCoCo в target/site/jacoco
+```
+
+Покрытие: 100% инструкций и ветвлений.
+
+### Frontend: unit-тесты и покрытие
+
+```bash
+cd frontend/graphvisualizer
+npm test                 # прогон тестов
+npm run test:coverage    # тесты + отчёт покрытия
+```
+
+69 тестов в 6 файлах (`__tests__/`). Покрытие считается для `lib/**` и `app/api/**`:
+
+| Файл | Statements | Branches | Functions | Lines |
+|---|---:|---:|---:|---:|
+| `force-layout.ts` | 97.8% | 91.3% | 85.7% | 100% |
+| `graph-builder.ts` | 100% | 85.2% | 100% | 100% |
+| `graph-renderer.ts` | 93.8% | 86.3% | 97.6% | 94.4% |
+| `layouts.ts` | 100% | 92.9% | 100% | 100% |
+| **Итого** | **95.5%** | **88.0%** | **97.5%** | **96.1%** |
+
+UI-компоненты React юнит-тестами не покрываются — их проверяют e2e-тесты.
+
+### E2E-тесты (Playwright)
+
+```bash
+cd frontend/graphvisualizer
+npx playwright install chromium    # один раз
+npm run test:e2e
+```
+
+Playwright сам собирает и запускает фронтенд (`next build && next start`, порт `3217`, переопределяется через `E2E_PORT`).
+**Backend для e2e не нужен**: запросы к `/algorithm/*` перехватываются в браузере (`e2e/fixtures.ts`), а SSE-поток шагов подменяется заранее заданным.
+В CI включены один retry, HTML-отчёт и trace при падении. Всего 21 тест:
+
+- **Редактор графа** (`graph.spec.ts`, 8): создание узлов кликом и горячей клавишей `N`, создание ребра с весом, отмена по `Escape`, удаление узла вместе с рёбрами, очистка холста с подтверждением, случайный граф с валидацией.
+- **Импорт / экспорт** (`graph.spec.ts`, 4): экспорт совпадает с импортом, флаг `directed`, ошибки на невалидный JSON и структуру, закрытие модалки по `Escape`.
+- **Алгоритмы** (`algorithm.spec.ts`, 6): загрузка списка алгоритмов, запрос в сжатом формате и проигрывание шагов, навигация по шагам (назад, в начало, вперёд, в конец), статус `ERROR`, HTTP 500 и повторный запуск, запуск без выбранных узлов.
+- **Визуальная регрессия** (`visual.spec.ts`, 3): скриншоты ненаправленного и направленного графа и завершённого обхода с путём и расстояниями (эталоны в `e2e/visual.spec.ts-snapshots/`).
+
+### Линтинг
+
+```bash
 cd frontend/graphvisualizer
 npm run lint
 ```
