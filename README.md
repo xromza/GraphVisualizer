@@ -1,6 +1,10 @@
 <div align="center">
 
-<img src="material/logo.svg" alt="Graph Visualizer" width="480">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="material/logo-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="material/logo.svg">
+  <img src="material/logo.svg" alt="Graph Visualizer" width="480">
+</picture>
 
 **Стройте. Запускайте. Разбирайтесь.**
 
