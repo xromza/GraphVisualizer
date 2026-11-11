@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 900" width="1500" height="900" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#555"/></marker></defs>
+<rect width="1500" height="900" fill="#fff"/>
+<text x="24" y="30" font-size="18" font-weight="bold">C4 · Уровень 2: Контейнеры Graph Visualizer (docker-compose)</text>
+<rect x="60" y="60" width="220" height="100" rx="24" fill="#08427b" stroke="#073b6f" stroke-width="1.5"/>
+<text x="170.0" y="98" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">Пользователь</text>
+<text x="170.0" y="116" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[Person]</text>
+<text x="170.0" y="131" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Браузер</text>
+<rect x="1130" y="60" width="220" height="100" rx="24" fill="#08427b" stroke="#073b6f" stroke-width="1.5"/>
+<text x="1240.0" y="98" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">Оператор</text>
+<text x="1240.0" y="116" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[Person]</text>
+<text x="1240.0" y="131" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Браузер</text>
+<rect x="30" y="200" width="980" height="670" rx="8" fill="none" stroke="#444" stroke-width="1.5" stroke-dasharray="8,5"/>
+<text x="42" y="222" font-size="13" font-weight="bold" fill="#444">Graph Visualizer</text>
+<rect x="1040" y="200" width="440" height="670" rx="8" fill="none" stroke="#444" stroke-width="1.5" stroke-dasharray="8,5"/>
+<text x="1052" y="222" font-size="13" font-weight="bold" fill="#444">Стек наблюдаемости</text>
+<rect x="370" y="250" width="240" height="100" rx="6" fill="#438dd5" stroke="#3c7fc0" stroke-width="1.5"/>
+<text x="490.0" y="280" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">nginx</text>
+<text x="490.0" y="298" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[nginx:alpine]</text>
+<text x="490.0" y="314" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Reverse proxy, TLS (443/80)</text>
+<text x="490.0" y="328" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">/ → frontend, /api/ → backend</text>
+<rect x="90" y="470" width="220" height="120" rx="6" fill="#438dd5" stroke="#3c7fc0" stroke-width="1.5"/>
+<text x="200.0" y="510" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">Frontend</text>
+<text x="200.0" y="528" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[Next.js 16, TypeScript, Canvas API]</text>
+<text x="200.0" y="544" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Редактор графа, раскладки,</text>
+<text x="200.0" y="558" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">отрисовка шагов алгоритма</text>
+<rect x="650" y="470" width="220" height="120" rx="6" fill="#438dd5" stroke="#3c7fc0" stroke-width="1.5"/>
+<text x="760.0" y="510" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">Backend</text>
+<text x="760.0" y="528" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[Spring Boot 3, WebFlux, Java 21]</text>
+<text x="760.0" y="544" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">REST + SSE, алгоритмы,</text>
+<text x="760.0" y="558" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">лимит запросов (Bucket4j)</text>
+<rect x="650" y="690" width="220" height="90" rx="6" fill="#438dd5" stroke="#3c7fc0" stroke-width="1.5"/>
+<text x="760.0" y="723" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">Redis</text>
+<text x="760.0" y="741" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[redis]</text>
+<text x="760.0" y="756" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Счётчики лимита запросов</text>
+<rect x="1060" y="450" width="170" height="100" rx="6" fill="#438dd5" stroke="#3c7fc0" stroke-width="1.5"/>
+<text x="1145.0" y="473" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">Prometheus</text>
+<text x="1145.0" y="491" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[prom/prometheus]</text>
+<text x="1145.0" y="506" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Хранит метрики, скрейпит</text>
+<text x="1145.0" y="521" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">backend, cAdvisor,</text>
+<text x="1145.0" y="536" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">node-exporter</text>
+<rect x="1060" y="660" width="170" height="90" rx="6" fill="#438dd5" stroke="#3c7fc0" stroke-width="1.5"/>
+<text x="1145.0" y="693" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">Loki</text>
+<text x="1145.0" y="711" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[grafana/loki]</text>
+<text x="1145.0" y="726" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Хранит логи</text>
+<rect x="1290" y="450" width="170" height="100" rx="6" fill="#438dd5" stroke="#3c7fc0" stroke-width="1.5"/>
+<text x="1375.0" y="488" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">cAdvisor</text>
+<text x="1375.0" y="506" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[cAdvisor]</text>
+<text x="1375.0" y="521" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Метрики контейнеров</text>
+<rect x="1290" y="660" width="170" height="90" rx="6" fill="#438dd5" stroke="#3c7fc0" stroke-width="1.5"/>
+<text x="1375.0" y="693" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">node-exporter</text>
+<text x="1375.0" y="711" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[node-exporter]</text>
+<text x="1375.0" y="726" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Метрики хоста</text>
+<rect x="1090" y="250" width="170" height="100" rx="6" fill="#438dd5" stroke="#3c7fc0" stroke-width="1.5"/>
+<text x="1175.0" y="280" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">Grafana</text>
+<text x="1175.0" y="298" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[grafana]</text>
+<text x="1175.0" y="314" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Дашборды и поиск</text>
+<text x="1175.0" y="328" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">по логам</text>
+<path d="M260,105 L490,105 L490,250" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a)"/>
+<rect x="297" y="118" width="135" height="13" fill="#fff" opacity="0.9"/>
+<text x="300" y="128" text-anchor="start" font-size="11" fill="#333">Открывает UI, запускает</text>
+<rect x="297" y="131" width="101" height="13" fill="#fff" opacity="0.9"/>
+<text x="300" y="141" text-anchor="start" font-size="11" fill="#333">алгоритмы [HTTPS]</text>
+<path d="M370,320 L200,320 L200,470" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a)"/>
+<rect x="207" y="390" width="73" height="13" fill="#fff" opacity="0.9"/>
+<text x="210" y="400" text-anchor="start" font-size="11" fill="#333">GET / [HTTP]</text>
+<path d="M610,320 L760,320 L760,470" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a)"/>
+<rect x="767" y="385" width="112" height="13" fill="#fff" opacity="0.9"/>
+<text x="770" y="395" text-anchor="start" font-size="11" fill="#333">/api/v1/algorithm/*</text>
+<rect x="767" y="398" width="68" height="13" fill="#fff" opacity="0.9"/>
+<text x="770" y="408" text-anchor="start" font-size="11" fill="#333">[HTTP, SSE]</text>
+<path d="M760,590 L760,690" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a)"/>
+<rect x="769" y="630" width="84" height="13" fill="#fff" opacity="0.9"/>
+<text x="772" y="640" text-anchor="start" font-size="11" fill="#333">Лимит запросов</text>
+<rect x="769" y="643" width="96" height="13" fill="#fff" opacity="0.9"/>
+<text x="772" y="653" text-anchor="start" font-size="11" fill="#333">[Redis protocol]</text>
+<path d="M1175,160 L1175,250" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a)"/>
+<rect x="1184" y="180" width="96" height="13" fill="#fff" opacity="0.9"/>
+<text x="1187" y="190" text-anchor="start" font-size="11" fill="#333">Смотрит дашборды</text>
+<rect x="1184" y="193" width="40" height="13" fill="#fff" opacity="0.9"/>
+<text x="1187" y="203" text-anchor="start" font-size="11" fill="#333">[HTTP]</text>
+<path d="M1060,490 L870,490" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a)"/>
+<rect x="912" y="468" width="51" height="13" fill="#fff" opacity="0.9"/>
+<text x="940" y="478" text-anchor="middle" font-size="11" fill="#333">Скрейпит</text>
+<rect x="878" y="481" width="118" height="13" fill="#fff" opacity="0.9"/>
+<text x="940" y="491" text-anchor="middle" font-size="11" fill="#333">/actuator/prometheus</text>
+<path d="M870,570 L980,570 L980,705 L1060,705" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a)"/>
+<rect x="887" y="620" width="28" height="13" fill="#fff" opacity="0.9"/>
+<text x="890" y="630" text-anchor="start" font-size="11" fill="#333">Логи</text>
+<rect x="887" y="633" width="84" height="13" fill="#fff" opacity="0.9"/>
+<text x="890" y="643" text-anchor="start" font-size="11" fill="#333">[HTTP, Loki4j]</text>
+<path d="M1230,490 L1290,490" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a)"/>
+<rect x="1237" y="468" width="40" height="13" fill="#fff" opacity="0.9"/>
+<text x="1260" y="478" text-anchor="middle" font-size="11" fill="#333">скрейп</text>
+<path d="M1260,300 L1275,300 L1275,705 L1230,705" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a)"/>
+<rect x="1240" y="620" width="34" height="13" fill="#fff" opacity="0.9"/>
+<text x="1260" y="630" text-anchor="middle" font-size="11" fill="#333">LogQL</text>
+<path d="M1100,350 L1100,450" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a)"/>
+<rect x="1105" y="390" width="40" height="13" fill="#fff" opacity="0.9"/>
+<text x="1108" y="400" text-anchor="start" font-size="11" fill="#333">PromQL</text>
+</svg>

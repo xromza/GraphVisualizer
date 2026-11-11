@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1760 730" width="1760" height="730" font-family="Arial, Helvetica, sans-serif" font-size="12">
+<defs><marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#222"/></marker><marker id="m" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="none" stroke="#222"/></marker></defs>
+<rect width="1760" height="730" fill="#fff"/>
+<rect x="20" y="20" width="1720" height="220" fill="#f5f9ff" stroke="#222" stroke-width="1.5"/>
+<rect x="20" y="20" width="36" height="220" fill="#e8e8e8" stroke="#222" stroke-width="1.5"/>
+<text transform="translate(44,130.0) rotate(-90)" text-anchor="middle" font-weight="bold" font-size="13">Пользователь</text>
+<rect x="20" y="240" width="1720" height="200" fill="#f7fbf5" stroke="#222" stroke-width="1.5"/>
+<rect x="20" y="240" width="36" height="200" fill="#e8e8e8" stroke="#222" stroke-width="1.5"/>
+<text transform="translate(44,340.0) rotate(-90)" text-anchor="middle" font-weight="bold" font-size="13">Frontend (Next.js)</text>
+<rect x="20" y="440" width="1720" height="260" fill="#fffaf2" stroke="#222" stroke-width="1.5"/>
+<rect x="20" y="440" width="36" height="260" fill="#e8e8e8" stroke="#222" stroke-width="1.5"/>
+<text transform="translate(44,570.0) rotate(-90)" text-anchor="middle" font-weight="bold" font-size="13">Backend (Spring WebFlux, Redis)</text>
+<circle cx="110" cy="130" r="18" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="110" y="166" text-anchor="middle" font-size="11" font-weight="normal">Нужно найти</text><text x="110" y="181" text-anchor="middle" font-size="11" font-weight="normal">путь в графе</text>
+<rect x="160" y="98" width="120" height="64" rx="10" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="220" y="126.5" text-anchor="middle" font-size="12" font-weight="normal">Построить граф</text><text x="220" y="141.5" text-anchor="middle" font-size="12" font-weight="normal">(узлы, рёбра, веса)</text>
+<rect x="330" y="98" width="120" height="64" rx="10" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="390" y="126.5" text-anchor="middle" font-size="12" font-weight="normal">Выбрать алгоритм,</text><text x="390" y="141.5" text-anchor="middle" font-size="12" font-weight="normal">старт, цель, точки</text>
+<rect x="500" y="98" width="120" height="64" rx="10" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="560" y="126.5" text-anchor="middle" font-size="12" font-weight="normal">Нажать «Запустить</text><text x="560" y="141.5" text-anchor="middle" font-size="12" font-weight="normal">визуализацию»</text>
+<path d="M128,130 L160,130" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M280,130 L330,130" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M450,130 L500,130" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="500" y="308" width="120" height="64" rx="10" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="560" y="336.5" text-anchor="middle" font-size="12" font-weight="normal">Сформировать и</text><text x="560" y="351.5" text-anchor="middle" font-size="12" font-weight="normal">отправить запрос</text>
+<path d="M560,162 L560,308" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="950" y="308" width="120" height="64" rx="10" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="1010" y="336.5" text-anchor="middle" font-size="12" font-weight="normal">Получить событие</text><text x="1010" y="351.5" text-anchor="middle" font-size="12" font-weight="normal">newStep</text>
+<rect x="1120" y="308" width="120" height="64" rx="10" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="1180" y="336.5" text-anchor="middle" font-size="12" font-weight="normal">Перерисовать</text><text x="1180" y="351.5" text-anchor="middle" font-size="12" font-weight="normal">Canvas</text>
+<polygon points="1320,316 1344,340 1320,364 1296,340" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="1320" y="345" text-anchor="middle" font-size="16" font-weight="bold">×</text>
+<text x="1320" y="286" text-anchor="middle" font-size="11" font-weight="bold">Поток</text><text x="1320" y="301" text-anchor="middle" font-size="11" font-weight="bold">завершён?</text>
+<rect x="1440" y="308" width="120" height="64" rx="10" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="1500" y="336.5" text-anchor="middle" font-size="12" font-weight="normal">Показать путь</text><text x="1500" y="351.5" text-anchor="middle" font-size="12" font-weight="normal">и расстояние</text>
+<circle cx="1500" cy="130" r="18" fill="#fff" stroke="#222" stroke-width="4"/>
+<text x="1500" y="166" text-anchor="middle" font-size="11" font-weight="normal">Результат</text><text x="1500" y="181" text-anchor="middle" font-size="11" font-weight="normal">показан</text>
+<path d="M620,340 L950,340" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1070,340 L1120,340" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1240,340 L1296,340" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1344,340 L1440,340" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="1385" y="332" text-anchor="start" font-size="11" font-weight="normal">да</text>
+<path d="M1320,316 L1320,285 L1010,285 L1010,308" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="1150" y="280" text-anchor="start" font-size="11" font-weight="normal">нет</text>
+<path d="M1500,308 L1500,148" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="500" y="488" width="120" height="64" rx="10" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="560" y="516.5" text-anchor="middle" font-size="12" font-weight="normal">Проверить лимит</text><text x="560" y="531.5" text-anchor="middle" font-size="12" font-weight="normal">(Redis, Bucket4j)</text>
+<path d="M560,372 L560,488" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<polygon points="700,496 724,520 700,544 676,520" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="700" y="525" text-anchor="middle" font-size="16" font-weight="bold">×</text>
+<text x="700" y="466" text-anchor="middle" font-size="11" font-weight="bold">Лимит не</text><text x="700" y="481" text-anchor="middle" font-size="11" font-weight="bold">исчерпан?</text>
+<path d="M620,520 L676,520" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<circle cx="700" cy="640" r="18" fill="#fff" stroke="#c00" stroke-width="4"/>
+<text x="700" y="676" text-anchor="middle" font-size="11" font-weight="normal">429 Too Many</text><text x="700" y="691" text-anchor="middle" font-size="11" font-weight="normal">Requests</text>
+<path d="M700,544 L700,622" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="708" y="570" text-anchor="start" font-size="11" font-weight="normal">нет</text>
+<rect x="790" y="488" width="120" height="64" rx="10" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="850" y="516.5" text-anchor="middle" font-size="12" font-weight="normal">Создать Sink</text><text x="850" y="531.5" text-anchor="middle" font-size="12" font-weight="normal">и Graph</text>
+<path d="M724,520 L790,520" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="742" y="512" text-anchor="start" font-size="11" font-weight="normal">да</text>
+<rect x="940" y="488" width="120" height="64" rx="10" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="1000" y="516.5" text-anchor="middle" font-size="12" font-weight="normal">Построить список</text><text x="1000" y="531.5" text-anchor="middle" font-size="12" font-weight="normal">остановок</text>
+<path d="M910,520 L940,520" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="1090" y="488" width="120" height="64" rx="10" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="1150" y="516.5" text-anchor="middle" font-size="12" font-weight="normal">Запустить алгоритм</text><text x="1150" y="531.5" text-anchor="middle" font-size="12" font-weight="normal">на участке</text>
+<path d="M1060,520 L1090,520" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="1240" y="488" width="120" height="64" rx="10" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="1300" y="516.5" text-anchor="middle" font-size="12" font-weight="normal">Отправить шаг</text><text x="1300" y="531.5" text-anchor="middle" font-size="12" font-weight="normal">(SSE newStep)</text>
+<path d="M1210,520 L1240,520" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<polygon points="1430,496 1454,520 1430,544 1406,520" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="1430" y="525" text-anchor="middle" font-size="16" font-weight="bold">×</text>
+<text x="1430" y="466" text-anchor="middle" font-size="11" font-weight="bold">Есть ещё</text><text x="1430" y="481" text-anchor="middle" font-size="11" font-weight="bold">шаги?</text>
+<path d="M1360,520 L1406,520" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1430,544 L1430,610 L1150,610 L1150,552" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="1438" y="570" text-anchor="start" font-size="11" font-weight="normal">да</text>
+<rect x="1520" y="488" width="120" height="64" rx="10" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<text x="1580" y="516.5" text-anchor="middle" font-size="12" font-weight="normal">Завершить поток</text><text x="1580" y="531.5" text-anchor="middle" font-size="12" font-weight="normal">(COMPLETED)</text>
+<path d="M1454,520 L1520,520" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="1470" y="512" text-anchor="start" font-size="11" font-weight="normal">нет</text>
+<circle cx="1700" cy="520" r="18" fill="#fff" stroke="#222" stroke-width="4"/>
+<text x="1700" y="556" text-anchor="middle" font-size="11" font-weight="normal">Поток</text><text x="1700" y="571" text-anchor="middle" font-size="11" font-weight="normal">закрыт</text>
+<path d="M1640,520 L1682,520" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1300,488 L1300,405 L1010,405 L1010,372" fill="none" stroke="#222" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#m)"/>
+<text x="1060" y="398" text-anchor="start" font-size="11" font-weight="normal">SSE: шаг алгоритма</text>
+<text x="24" y="718" font-size="13" font-weight="bold">Graph Visualizer · BPMN: запуск визуализации алгоритма</text>
+</svg>

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 620" width="1100" height="620" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#555"/></marker></defs>
+<rect width="1100" height="620" fill="#fff"/>
+<text x="24" y="30" font-size="18" font-weight="bold">C4 · Уровень 1: Контекст системы Graph Visualizer</text>
+<rect x="100" y="70" width="220" height="100" rx="24" fill="#08427b" stroke="#073b6f" stroke-width="1.5"/>
+<text x="210.0" y="100" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">Пользователь</text>
+<text x="210.0" y="118" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[Person]</text>
+<text x="210.0" y="134" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Строит графы и запускает</text>
+<text x="210.0" y="148" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">визуализацию алгоритмов</text>
+<rect x="780" y="70" width="220" height="100" rx="24" fill="#08427b" stroke="#073b6f" stroke-width="1.5"/>
+<text x="890.0" y="100" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">Оператор</text>
+<text x="890.0" y="118" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[Person]</text>
+<text x="890.0" y="134" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Следит за метриками</text>
+<text x="890.0" y="148" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">и логами сервиса</text>
+<rect x="400" y="260" width="300" height="140" rx="6" fill="#1168bd" stroke="#0b4884" stroke-width="1.5"/>
+<text x="550.0" y="303" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">Graph Visualizer</text>
+<text x="550.0" y="321" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[Software System]</text>
+<text x="550.0" y="336" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Веб-приложение: пошаговая анимация</text>
+<text x="550.0" y="351" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">BFS, DFS, Dijkstra и A* на графе</text>
+<text x="550.0" y="366" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">с промежуточными точками</text>
+<rect x="780" y="460" width="220" height="110" rx="6" fill="#8a8a8a" stroke="#6b6b6b" stroke-width="1.5"/>
+<text x="890.0" y="496" text-anchor="middle" font-size="14" font-weight="bold" font-style="normal" fill="#fff">Стек наблюдаемости</text>
+<text x="890.0" y="514" text-anchor="middle" font-size="11" font-weight="normal" font-style="italic" fill="#fff">[Software System]</text>
+<text x="890.0" y="528" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">Prometheus, Grafana, Loki,</text>
+<text x="890.0" y="544" text-anchor="middle" font-size="11" font-weight="normal" font-style="normal" fill="#fff">cAdvisor, node-exporter</text>
+<path d="M210,170 L210,330 L400,330" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a)"/>
+<rect x="222" y="230" width="185" height="13" fill="#fff" opacity="0.9"/>
+<text x="225" y="240" text-anchor="start" font-size="11" fill="#333">Строит граф, запускает алгоритм,</text>
+<rect x="222" y="243" width="140" height="13" fill="#fff" opacity="0.9"/>
+<text x="225" y="253" text-anchor="start" font-size="11" fill="#333">смотрит анимацию [HTTPS]</text>
+<path d="M890,170 L890,460" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a)"/>
+<rect x="897" y="290" width="96" height="13" fill="#fff" opacity="0.9"/>
+<text x="900" y="300" text-anchor="start" font-size="11" fill="#333">Смотрит дашборды</text>
+<rect x="897" y="303" width="90" height="13" fill="#fff" opacity="0.9"/>
+<text x="900" y="313" text-anchor="start" font-size="11" fill="#333">[HTTP, Grafana]</text>
+<path d="M600,400 L600,515 L780,515" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#a)"/>
+<rect x="609" y="460" width="124" height="13" fill="#fff" opacity="0.9"/>
+<text x="612" y="470" text-anchor="start" font-size="11" fill="#333">Отдаёт метрики и логи</text>
+<rect x="609" y="473" width="40" height="13" fill="#fff" opacity="0.9"/>
+<text x="612" y="483" text-anchor="start" font-size="11" fill="#333">[HTTP]</text>
+</svg>
