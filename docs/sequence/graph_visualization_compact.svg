@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 1204" width="1040" height="1204" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="ah" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#000"/></marker></defs>
+<rect width="1040" height="1204" fill="#fff"/>
+<rect x="25" y="256" width="990" height="72" fill="none" stroke="#555" stroke-width="1.1"/><path d="M25,256 h58 v18 l-8,8 h-50 z" fill="#e6e6e6" stroke="#555"/><text x="31" y="273" font-size="14" font-weight="bold">alt</text><text x="91" y="273" font-size="14">[лимит исчерпан]</text>
+<rect x="25" y="598" width="990" height="72" fill="none" stroke="#555" stroke-width="1.1"/><path d="M25,598 h58 v18 l-8,8 h-50 z" fill="#e6e6e6" stroke="#555"/><text x="31" y="615" font-size="14" font-weight="bold">opt</text><text x="91" y="615" font-size="14">[пока поток открыт и алгоритм не завершён]</text>
+<rect x="35" y="826" width="970" height="216" fill="none" stroke="#555" stroke-width="1.1"/><path d="M35,826 h58 v18 l-8,8 h-50 z" fill="#e6e6e6" stroke="#555"/><text x="41" y="843" font-size="14" font-weight="bold">loop</text><text x="101" y="843" font-size="14">[каждый шаг алгоритма]</text>
+<rect x="15" y="742" width="1010" height="306" fill="none" stroke="#555" stroke-width="1.1"/><path d="M15,742 h58 v18 l-8,8 h-50 z" fill="#e6e6e6" stroke="#555"/><text x="21" y="759" font-size="14" font-weight="bold">loop</text><text x="81" y="759" font-size="14">[каждый участок маршрута]</text>
+<line x1="80" y1="80" x2="80" y2="1184" stroke="#777" stroke-dasharray="3,5"/>
+<rect x="12" y="20" width="136" height="58" fill="#eaeaea" stroke="#444" rx="4"/>
+<text x="80" y="44" text-anchor="middle" font-size="14" font-weight="bold">Frontend</text>
+<text x="80" y="62" text-anchor="middle" font-size="14" font-weight="bold">(Next.js)</text>
+<line x1="255" y1="80" x2="255" y2="1184" stroke="#777" stroke-dasharray="3,5"/>
+<rect x="187" y="20" width="136" height="58" fill="#eaeaea" stroke="#444" rx="4"/>
+<text x="255" y="44" text-anchor="middle" font-size="14" font-weight="bold">RateLimiting-</text>
+<text x="255" y="62" text-anchor="middle" font-size="14" font-weight="bold">Filter</text>
+<line x1="435" y1="80" x2="435" y2="1184" stroke="#777" stroke-dasharray="3,5"/>
+<rect x="367" y="20" width="136" height="58" fill="#eaeaea" stroke="#444" rx="4"/>
+<text x="435" y="44" text-anchor="middle" font-size="14" font-weight="bold">Stream-</text>
+<text x="435" y="62" text-anchor="middle" font-size="14" font-weight="bold">Controller</text>
+<line x1="615" y1="80" x2="615" y2="1184" stroke="#777" stroke-dasharray="3,5"/>
+<rect x="547" y="20" width="136" height="58" fill="#eaeaea" stroke="#444" rx="4"/>
+<text x="615" y="44" text-anchor="middle" font-size="14" font-weight="bold">Client-</text>
+<text x="615" y="62" text-anchor="middle" font-size="14" font-weight="bold">Storage</text>
+<line x1="790" y1="80" x2="790" y2="1184" stroke="#777" stroke-dasharray="3,5"/>
+<rect x="722" y="20" width="136" height="58" fill="#eaeaea" stroke="#444" rx="4"/>
+<text x="790" y="44" text-anchor="middle" font-size="14" font-weight="bold">Algorithm-</text>
+<text x="790" y="62" text-anchor="middle" font-size="14" font-weight="bold">Service</text>
+<line x1="955" y1="80" x2="955" y2="1184" stroke="#777" stroke-dasharray="3,5"/>
+<rect x="887" y="20" width="136" height="58" fill="#eaeaea" stroke="#444" rx="4"/>
+<text x="955" y="44" text-anchor="middle" font-size="14" font-weight="bold">Graph-</text>
+<text x="955" y="62" text-anchor="middle" font-size="14" font-weight="bold">Algorithm</text>
+<text x="167.5" y="146" text-anchor="middle" font-size="14">POST /api/v1/algorithm/run</text>
+<text x="167.5" y="164" text-anchor="middle" font-size="14">(JSON: граф, алгоритм, старт, цель)</text>
+<line x1="80" y1="172" x2="255" y2="172" stroke="#000" stroke-width="1.3" marker-end="url(#ah)"/>
+<path d="M255,194 h45 v50 h-45" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="307" y="210" text-anchor="start" font-size="14">tryConsume(1) по IP</text>
+<text x="307" y="228" text-anchor="start" font-size="14">(Redis, 50 запр./мин)</text>
+<text x="167.5" y="302" text-anchor="middle" font-size="14">429 Too Many Requests</text>
+<line x1="255" y1="310" x2="80" y2="310" stroke="#000" stroke-width="1.3" stroke-dasharray="6,4" marker-end="url(#ah)"/>
+<text x="345.0" y="344" text-anchor="middle" font-size="14">chain.filter()</text>
+<line x1="255" y1="352" x2="435" y2="352" stroke="#000" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="525.0" y="380" text-anchor="middle" font-size="14">addClient(userToken)</text>
+<line x1="435" y1="388" x2="615" y2="388" stroke="#000" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="525.0" y="416" text-anchor="middle" font-size="14">Sinks.Many</text>
+<line x1="615" y1="424" x2="435" y2="424" stroke="#000" stroke-width="1.3" stroke-dasharray="6,4" marker-end="url(#ah)"/>
+<path d="M435,446 h45 v50 h-45" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="487" y="462" text-anchor="start" font-size="14">Graph.of(nodes, edges,</text>
+<text x="487" y="480" text-anchor="start" font-size="14">directed)</text>
+<text x="612.5" y="524" text-anchor="middle" font-size="14">consumeVisualization(graph, start,</text>
+<text x="612.5" y="542" text-anchor="middle" font-size="14">target, waypoints, type, sink)</text>
+<line x1="435" y1="550" x2="790" y2="550" stroke="#000" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="257.5" y="578" text-anchor="middle" font-size="14">200 OK, text/event-stream</text>
+<line x1="435" y1="586" x2="80" y2="586" stroke="#000" stroke-width="1.3" stroke-dasharray="6,4" marker-end="url(#ah)"/>
+<text x="257.5" y="644" text-anchor="middle" font-size="14">SSE-комментарий ping каждые 3 с</text>
+<line x1="435" y1="652" x2="80" y2="652" stroke="#000" stroke-width="1.3" stroke-dasharray="6,4" marker-end="url(#ah)"/>
+<path d="M790,680 h45 v50 h-45" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="842" y="696" text-anchor="start" font-size="14">getAlgorithm(type),</text>
+<text x="842" y="714" text-anchor="start" font-size="14">buildStops()</text>
+<text x="872.5" y="788" text-anchor="middle" font-size="14">compute(graph, from, to,</text>
+<text x="872.5" y="806" text-anchor="middle" font-size="14">stepListener)</text>
+<line x1="790" y1="814" x2="955" y2="814" stroke="#000" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="872.5" y="872" text-anchor="middle" font-size="14">listener.accept(step)</text>
+<line x1="955" y1="880" x2="790" y2="880" stroke="#000" stroke-width="1.3" stroke-dasharray="6,4" marker-end="url(#ah)"/>
+<path d="M790,902 h45 v50 h-45" fill="none" stroke="#000" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="842" y="918" text-anchor="start" font-size="14">shift(): общая нумерация,</text>
+<text x="842" y="936" text-anchor="start" font-size="14">путь, смещение расстояний</text>
+<text x="612.5" y="980" text-anchor="middle" font-size="14">sink.tryEmitNext(step)</text>
+<line x1="790" y1="988" x2="435" y2="988" stroke="#000" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="257.5" y="1016" text-anchor="middle" font-size="14">SSE: event newStep</text>
+<line x1="435" y1="1024" x2="80" y2="1024" stroke="#000" stroke-width="1.3" stroke-dasharray="6,4" marker-end="url(#ah)"/>
+<text x="612.5" y="1064" text-anchor="middle" font-size="14">sink.tryEmitComplete()</text>
+<text x="612.5" y="1082" text-anchor="middle" font-size="14">(COMPLETED, итоговый путь)</text>
+<line x1="790" y1="1090" x2="435" y2="1090" stroke="#000" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="257.5" y="1118" text-anchor="middle" font-size="14">SSE: последний newStep, поток закрыт</text>
+<line x1="435" y1="1126" x2="80" y2="1126" stroke="#000" stroke-width="1.3" stroke-dasharray="6,4" marker-end="url(#ah)"/>
+<text x="525.0" y="1154" text-anchor="middle" font-size="14">removeClient(userToken, sink)</text>
+<line x1="435" y1="1162" x2="615" y2="1162" stroke="#000" stroke-width="1.3" marker-end="url(#ah)"/>
+</svg>

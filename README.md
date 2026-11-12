@@ -96,7 +96,7 @@
 
 Клиент отправляет граф и параметры запуска одним `POST`-запросом, а сервер в ответ стримит
 последовательность шагов алгоритма (`text/event-stream`). Фронтенд применяет каждый шаг
-к состоянию визуализации по мере поступления. Диаграммы C4, BPMN, IDEF0 и sequence лежат в [`docs/`](docs).
+к состоянию визуализации по мере поступления. Диаграммы C4, BPMN, IDEF0, sequence, классов и компонентов лежат в [`docs/`](docs).
 
 ## Быстрый старт
 
@@ -286,7 +286,7 @@ GraphVisualizer/
 │   ├── app/                # Next.js App Router
 │   ├── components/         # React-компоненты
 │   └── lib/                # api.ts, graph-builder.ts, graph-renderer.ts
-├── docs/                   # C4, BPMN, IDEF0, sequence-диаграммы
+├── docs/                   # C4, BPMN, IDEF0, sequence, диаграммы классов и компонентов
 ├── demo/                   # Демо- и промо-видео
 ├── docker-compose.yml      # Приложение + observability-стек
 ├── nginx.conf              # Reverse proxy (HTTP)
@@ -298,10 +298,12 @@ GraphVisualizer/
 
 Архитектурные диаграммы проекта:
 
-- **C4:** [контекст](docs/c4/C4_L1_context.svg) · [контейнеры](docs/c4/C4_L2_containers.svg)
+- **C4:** [контекст](docs/c4/C4_L1_context.svg) · [контейнеры](docs/c4/C4_L2_containers.svg) · [компоненты Backend](docs/c4/C4_L3_components_backend.svg)
 - **BPMN:** [бизнес-процесс](docs/bpmn/bpmn-diagram.svg)
-- **IDEF0:** [A-0](docs/idef0/A-0_context.svg) · [A0](docs/idef0/A0_decomposition.svg) · [A4](docs/idef0/A4_decomposition.svg)
-- **Sequence:** [визуализация графа](docs/sequence/graph_visualization.svg)
+- **IDEF0:** [A-0](docs/idef0/A-0_context.svg) · [A0](docs/idef0/A0_decomposition.svg) ([PNG](docs/idef0/A0_decomposition.png)) · [A4](docs/idef0/A4_decomposition.svg)
+- **Sequence:** [визуализация графа](docs/sequence/graph_visualization.png) ([SVG](docs/sequence/graph_visualization_compact.svg), [подробная версия](docs/sequence/graph_visualization.svg))
+- **Диаграмма классов (backend):** [PNG](docs/class/class_diagram.png)
+- **Диаграмма компонентов:** [PNG](docs/component/component_diagram.png)
 
 ## Участие в разработке
 
